@@ -1,0 +1,2093 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="htmlTag">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>واجهة الاختبارات التفاعلية | Interactive Exam</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0c0e12;
+            --ink-soft: #3a3f4a;
+            --paper: #ffffff;
+            --mist: #eef5ff;
+            --sky: #5ea9ff;
+            --sky-deep: #2d7df6;
+            --sky-glow: rgba(94, 169, 255, 0.45);
+            --line: #e3e9f2;
+            --muted: #8a93a3;
+            --good: #19b37b;
+            --good-bg: #e7f9f0;
+            --good-line: #19b37b;
+            --bad: #ef4d57;
+            --bad-bg: #fdecee;
+            --bad-line: #ef4d57;
+            --radius-lg: 22px;
+            --radius-md: 14px;
+            --shadow-card: 0 24px 60px -20px rgba(12, 14, 18, 0.18), 0 2px 8px rgba(12, 14, 18, 0.04);
+        }
+
+        * { box-sizing: border-box; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+            }
+        }
+
+        html, body { margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Tajawal', 'Manrope', 'Segoe UI', Tahoma, sans-serif;
+            color: var(--ink);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 28px 16px 60px;
+            position: relative;
+            overflow-x: hidden;
+            background: var(--paper);
+        }
+
+        html[dir="ltr"] body { font-family: 'Manrope', 'Tajawal', 'Segoe UI', Tahoma, sans-serif; }
+
+        .bg-field {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background:
+                radial-gradient(ellipse 900px 500px at 50% -10%, var(--sky-glow), transparent 60%),
+                radial-gradient(ellipse 700px 500px at 90% 10%, rgba(45, 125, 246, 0.12), transparent 55%),
+                linear-gradient(180deg, #fbfdff 0%, #ffffff 40%, #f4f8ff 100%);
+        }
+
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            opacity: 0.5;
+            background-image:
+                linear-gradient(to left, rgba(12,14,18,0.035) 1px, transparent 1px),
+                linear-gradient(to top, rgba(12,14,18,0.035) 1px, transparent 1px);
+            background-size: 42px 42px;
+            mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,0.7) 12%, rgba(0,0,0,0.7) 70%, transparent);
+        }
+
+        .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 22px;
+            animation: dropIn 0.5s ease both;
+        }
+        .brand-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--sky), var(--sky-deep));
+            box-shadow: 0 0 0 4px rgba(94,169,255,0.18);
+        }
+        .brand-text {
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            font-size: 13px;
+            color: var(--ink-soft);
+            text-transform: uppercase;
+        }
+        .sound-toggle-btn {
+            margin-inline-start: 4px;
+            border: 1.5px solid var(--line);
+            background: var(--paper);
+            border-radius: 999px;
+            width: 32px;
+            height: 32px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            padding: 0;
+        }
+        .sound-toggle-btn:hover {
+            border-color: var(--sky);
+            transform: translateY(-1px);
+        }
+        .sound-toggle-btn.muted {
+            opacity: 0.55;
+        }
+
+        .controls-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 28px;
+            width: 100%;
+            max-width: 760px;
+            animation: dropIn 0.6s ease both;
+            animation-delay: 0.05s;
+        }
+
+        .lang-switcher {
+            display: flex;
+            gap: 6px;
+            background: var(--ink);
+            padding: 5px;
+            border-radius: 999px;
+            box-shadow: 0 10px 24px -10px rgba(12,14,18,0.35);
+        }
+
+        .lang-btn {
+            background: transparent;
+            color: rgba(255,255,255,0.65);
+            border: none;
+            padding: 9px 22px;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: inherit;
+        }
+
+        .lang-btn.active {
+            background: linear-gradient(135deg, var(--sky), var(--sky-deep));
+            color: #ffffff;
+            box-shadow: 0 4px 14px -2px rgba(45,125,246,0.5);
+        }
+
+        .lang-btn:hover:not(.active) {
+            color: #ffffff;
+        }
+
+        .unit-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            background-color: var(--paper);
+            color: var(--ink-soft);
+            border: 1.5px solid var(--line);
+            padding: 9px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .tab-btn:hover {
+            border-color: var(--sky);
+            color: var(--sky-deep);
+            transform: translateY(-1px);
+        }
+
+        .tab-btn.active {
+            background: var(--ink);
+            color: white;
+            border-color: var(--ink);
+        }
+
+        .quiz-container {
+            background-color: var(--paper);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            border: 1px solid var(--line);
+            width: 100%;
+            max-width: 760px;
+            padding: 38px 34px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            animation: cardIn 0.6s cubic-bezier(.2,.8,.2,1) both;
+            animation-delay: 0.1s;
+        }
+
+        .quiz-container::before {
+            content: "";
+            position: absolute;
+            top: 0; right: 0; left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--sky) 0%, var(--sky-deep) 50%, var(--ink) 100%);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--ink);
+            margin-top: 4px;
+            margin-bottom: 6px;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+
+        .unit-title-header {
+            text-align: center;
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 24px;
+            font-weight: 700;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--mist);
+            height: 10px;
+            border-radius: 999px;
+            margin-bottom: 28px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--sky), var(--sky-deep));
+            width: 0%;
+            transition: width 0.4s cubic-bezier(.2,.8,.2,1);
+            box-shadow: 0 0 12px var(--sky-glow);
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+            animation: shimmer 1.8s linear infinite;
+        }
+
+        .question-block {
+            margin-bottom: 8px;
+            animation: questionIn 0.4s cubic-bezier(.2,.8,.2,1) both;
+        }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .question-counter {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--sky-deep);
+            background: var(--mist);
+            padding: 5px 14px;
+            border-radius: 999px;
+            letter-spacing: 0.02em;
+        }
+
+        .question-text {
+            font-size: 21px;
+            font-weight: 700;
+            margin-bottom: 22px;
+            line-height: 1.55;
+            color: var(--ink);
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            width: 100%;
+        }
+
+        .option-btn {
+            width: 100%;
+            text-align: right;
+            padding: 16px 20px;
+            background-color: var(--paper);
+            border: 2px solid var(--line);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.18s ease;
+            font-size: 16px;
+            font-weight: 500;
+            font-family: inherit;
+            color: var(--ink);
+            display: block;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        html[dir="ltr"] .option-btn {
+            text-align: left;
+        }
+
+        .option-btn strong {
+            color: var(--sky-deep);
+            font-weight: 800;
+            margin-inline-end: 4px;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: var(--mist);
+            border-color: var(--sky);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px -8px rgba(45,125,246,0.35);
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+        }
+
+        .option-btn:focus-visible {
+            outline: 3px solid var(--sky-deep);
+            outline-offset: 2px;
+        }
+
+        .option-btn.correct {
+            background-color: var(--good-bg) !important;
+            border-color: var(--good-line) !important;
+            color: #0d6b4a !important;
+            font-weight: 700;
+            animation: pulseGood 0.5s ease;
+        }
+        .option-btn.correct strong { color: #0d6b4a !important; }
+
+        .option-btn.wrong {
+            background-color: var(--bad-bg) !important;
+            border-color: var(--bad-line) !important;
+            color: #b3222c !important;
+            animation: shakeX 0.4s ease;
+        }
+        .option-btn.wrong strong { color: #b3222c !important; }
+
+        #result-card {
+            text-align: center;
+            padding: 10px 0 0;
+            display: none;
+            animation: cardIn 0.5s cubic-bezier(.2,.8,.2,1) both;
+        }
+
+        .result-emoji {
+            font-size: 52px;
+            display: block;
+            margin-bottom: 6px;
+            animation: popIn 0.5s cubic-bezier(.2,.8,.2,1) both;
+        }
+
+        .result-msg {
+            font-size: 25px;
+            font-weight: 800;
+            margin-bottom: 18px;
+            color: var(--ink);
+        }
+
+        .score-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--ink-soft);
+            margin-bottom: 28px;
+            line-height: 1.7;
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, var(--ink) 0%, #1d212b 100%);
+            color: white;
+            border: none;
+            padding: 14px 34px;
+            font-size: 16px;
+            font-weight: 800;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.22s ease;
+            font-family: inherit;
+            box-shadow: 0 10px 24px -10px rgba(12,14,18,0.45);
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px -10px rgba(12,14,18,0.5);
+            background: linear-gradient(135deg, var(--sky-deep) 0%, var(--ink) 100%);
+        }
+
+        .restart-btn:active { transform: translateY(0); }
+
+        @keyframes dropIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(16px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes questionIn {
+            from { opacity: 0; transform: translateX(8px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes shimmer {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+        @keyframes pulseGood {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shakeX {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.6); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @media (max-width: 520px) {
+            .quiz-container { padding: 26px 20px; }
+            h1 { font-size: 21px; }
+            .question-text { font-size: 18px; }
+            .option-btn { padding: 14px 16px; font-size: 15px; }
+            .tab-btn { font-size: 12px; padding: 8px 12px; }
+        }
+
+        /* ===== زر إدارة الوحدات (ثابت في الزاوية) ===== */
+        .manage-corner-btn {
+            position: fixed;
+            top: 16px;
+            inset-inline-end: 16px;
+            z-index: 500;
+            background: var(--paper);
+            color: var(--ink-soft);
+            border: 1.5px solid var(--line);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            font-size: 17px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 20px -8px rgba(12,14,18,0.18);
+        }
+        .manage-corner-btn:hover {
+            border-color: var(--sky);
+            color: var(--sky-deep);
+            transform: translateY(-1px) rotate(25deg);
+            box-shadow: 0 10px 22px -8px rgba(45,125,246,0.35);
+        }
+
+        /* ===== نافذة الإدارة (Modal) ===== */
+        .manage-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(12, 14, 18, 0.55);
+            backdrop-filter: blur(3px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+            animation: fadeInOverlay 0.2s ease both;
+        }
+        .manage-overlay.open { display: flex; }
+
+        @keyframes fadeInOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .manage-panel {
+            background: var(--paper);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 560px;
+            max-height: 88vh;
+            overflow-y: auto;
+            padding: 26px 26px 30px;
+            box-shadow: 0 30px 70px -20px rgba(0,0,0,0.4);
+            animation: cardIn 0.3s cubic-bezier(.2,.8,.2,1) both;
+            position: relative;
+        }
+
+        .manage-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .manage-header h2 {
+            font-size: 19px;
+            font-weight: 800;
+            margin: 0;
+            color: var(--ink);
+        }
+        .manage-close {
+            background: var(--mist);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 14px;
+            cursor: pointer;
+            color: var(--ink-soft);
+            transition: all 0.2s ease;
+        }
+        .manage-close:hover {
+            background: var(--bad-bg);
+            color: var(--bad);
+        }
+
+        .manage-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+            border-bottom: 1.5px solid var(--line);
+            padding-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .manage-tab-btn {
+            background: var(--mist);
+            border: none;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--ink-soft);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .manage-tab-btn.active {
+            background: var(--ink);
+            color: white;
+        }
+
+        .manage-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--ink-soft);
+            margin-bottom: 6px;
+            margin-top: 14px;
+        }
+        .manage-label:first-of-type { margin-top: 0; }
+
+        .manage-input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid var(--line);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--ink);
+            background: var(--paper);
+            transition: border-color 0.2s ease;
+        }
+        .manage-input:focus {
+            outline: none;
+            border-color: var(--sky);
+            box-shadow: 0 0 0 3px rgba(94,169,255,0.18);
+        }
+        .manage-textarea {
+            resize: vertical;
+            min-height: 56px;
+        }
+
+        .manage-options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .manage-action-btn {
+            margin-top: 20px;
+            width: 100%;
+            background: linear-gradient(135deg, var(--sky), var(--sky-deep));
+            color: white;
+            border: none;
+            padding: 13px;
+            font-size: 14.5px;
+            font-weight: 800;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .manage-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px -8px rgba(45,125,246,0.5);
+        }
+
+        .manage-feedback {
+            margin-top: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            min-height: 18px;
+        }
+        .manage-feedback.success { color: var(--good); }
+        .manage-feedback.error { color: var(--bad); }
+
+        .manage-hint {
+            font-size: 13px;
+            color: var(--muted);
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .custom-unit-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            border: 1.5px solid var(--line);
+            border-radius: var(--radius-md);
+            margin-bottom: 10px;
+        }
+        .custom-unit-card .unit-info {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--ink);
+        }
+        .custom-unit-card .unit-count {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        .custom-unit-card .unit-delete-btn {
+            background: var(--bad-bg);
+            color: var(--bad);
+            border: none;
+            padding: 7px 14px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .custom-unit-card .unit-delete-btn:hover {
+            background: var(--bad);
+            color: white;
+        }
+
+        .custom-question-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 14px 8px 28px;
+            font-size: 12.5px;
+            color: var(--ink-soft);
+            border-bottom: 1px solid var(--line);
+        }
+        .custom-question-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .question-delete-btn {
+            background: none;
+            border: none;
+            color: var(--bad);
+            font-size: 13px;
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-inline-start: 8px;
+            flex-shrink: 0;
+        }
+        .question-delete-btn:hover {
+            background: var(--bad-bg);
+        }
+
+        /* ===== نافذة كلمة المرور ===== */
+        .password-panel {
+            background: var(--paper);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 340px;
+            padding: 32px 28px;
+            text-align: center;
+            box-shadow: 0 30px 70px -20px rgba(0,0,0,0.4);
+            animation: cardIn 0.3s cubic-bezier(.2,.8,.2,1) both;
+        }
+        .password-icon {
+            font-size: 34px;
+            margin-bottom: 10px;
+        }
+        .password-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0 0 6px;
+            color: var(--ink);
+        }
+        .password-sub {
+            font-size: 13px;
+            color: var(--muted);
+            margin: 0 0 18px;
+            line-height: 1.6;
+        }
+        .password-panel .manage-input {
+            text-align: center;
+            margin-bottom: 14px;
+            letter-spacing: 3px;
+        }
+        .password-panel .manage-action-btn {
+            margin-top: 0;
+        }
+        .password-panel .manage-feedback {
+            text-align: center;
+        }
+
+        /* ===== منطقة الحذف الخطرة ===== */
+        .manage-section-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--ink-soft);
+            margin: 0 0 10px;
+        }
+        .custom-unit-card.builtin-hidden {
+            opacity: 0.5;
+        }
+        .custom-unit-card .unit-toggle-btn {
+            background: var(--mist);
+            color: var(--sky-deep);
+            border: none;
+            padding: 7px 14px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-inline-end: 6px;
+        }
+        .custom-unit-card .unit-toggle-btn:hover {
+            background: var(--sky);
+            color: white;
+        }
+        .manage-danger-zone {
+            margin-top: 26px;
+            padding-top: 18px;
+            border-top: 1.5px dashed var(--line);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .manage-danger-btn {
+            background: var(--paper);
+            border: 1.5px solid var(--line);
+            color: var(--ink-soft);
+            padding: 11px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .manage-danger-btn:hover {
+            border-color: var(--sky);
+            color: var(--sky-deep);
+        }
+        .manage-danger-btn.danger {
+            border-color: var(--bad-line);
+            color: var(--bad);
+        }
+        .manage-danger-btn.danger:hover {
+            background: var(--bad);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-field"></div>
+<div class="bg-grid"></div>
+
+<button class="manage-corner-btn" id="manageBtn" onclick="openManagePanel()" title="إدارة الوحدات والأسئلة" aria-label="إدارة الوحدات والأسئلة">⚙️</button>
+
+<div class="brand-row">
+    <span class="brand-dot"></span>
+    <span class="brand-text" id="brandText">Quiz</span>
+    <button class="sound-toggle-btn" id="soundToggleBtn" onclick="toggleSound(this)" title="تشغيل/كتم الصوت" aria-label="تشغيل أو كتم الصوت">🔊</button>
+</div>
+
+<div class="controls-container">
+    <div class="lang-switcher">
+        <button class="lang-btn active" id="btn-lang-ar" onclick="switchLanguage('ar')">العربية</button>
+        <button class="lang-btn" id="btn-lang-en" onclick="switchLanguage('en')">English</button>
+    </div>
+    
+    <div class="unit-tabs" id="unitTabsContainer">
+        <button class="tab-btn active" id="tab-all" onclick="filterUnit('all')">جميع الأسئلة (All)</button>
+        <button class="tab-btn" id="tab-inv" onclick="filterUnit('invitations')">الدعوات (Invitations)</button>
+        <button class="tab-btn" id="tab-u2" onclick="filterUnit('unit2')">الوحدة 2 (Unit 2)</button>
+        <button class="tab-btn" id="tab-u3" onclick="filterUnit('unit3')">الوحدة 3 (Unit 3)</button>
+        <button class="tab-btn" id="tab-u4" onclick="filterUnit('unit4')">الوحدة 4 (Unit 4)</button>
+        <button class="tab-btn" id="tab-lt" onclick="filterUnit('learning_tips')">نصائح التعلم (Learning Tips)</button>
+        <button class="tab-btn" id="tab-dyk" onclick="filterUnit('did_you_know')">هل تعلم؟ (Did You Know)</button>
+        <button class="tab-btn" id="tab-vocab" onclick="filterUnit('vocabulary')">مفردات (Vocabulary)</button>
+        <button class="tab-btn" id="tab-sg" onclick="filterUnit('smash_grab')">Smash and Grab</button>
+        <button class="tab-btn" id="tab-crazy" onclick="filterUnit('crazy')">Crazy</button>
+    </div>
+</div>
+
+<div class="quiz-container">
+    <h1 id="quizTitle">📝 الاختبار المدرسي الشامل</h1>
+    <div class="unit-title-header" id="unitHeader">عرض جميع الأقسام</div>
+    
+    <div class="progress-bar-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div id="quiz-box">
+        <div class="question-block">
+            <div class="question-meta">
+                <span class="question-counter" id="questionCounter"></span>
+            </div>
+            <p class="question-text" id="questionText"></p>
+            <div class="options-list" id="optionsContainer"></div>
+        </div>
+    </div>
+
+    <div id="result-card">
+        <span class="result-emoji" id="resultEmoji">🎉</span>
+        <div class="result-msg" id="resultMsg"></div>
+        <div class="score-text" id="scoreText"></div>
+        <button class="restart-btn" id="restartBtn" onclick="restartQuiz()">إعادة الاختبار</button>
+    </div>
+</div>
+
+<!-- ===== نافذة كلمة المرور ===== -->
+<div class="manage-overlay" id="passwordOverlay" onclick="closePasswordOnOverlay(event)">
+    <div class="password-panel">
+        <div class="password-icon">🔒</div>
+        <h2 class="password-title" id="passwordTitle">منطقة محمية</h2>
+        <p class="password-sub" id="passwordSub">أدخل كلمة المرور للدخول إلى لوحة الإدارة</p>
+        <input type="password" id="managePasswordInput" class="manage-input" placeholder="••••••" onkeydown="if(event.key==='Enter') checkManagePassword()">
+        <button class="manage-action-btn" onclick="checkManagePassword()" id="passwordSubmitBtn">دخول</button>
+        <div class="manage-feedback error" id="passwordFeedback"></div>
+    </div>
+</div>
+
+<!-- ===== لوحة إدارة الوحدات والأسئلة ===== -->
+<div class="manage-overlay" id="manageOverlay" onclick="closeManagePanelOnOverlay(event)">
+    <div class="manage-panel" id="managePanel">
+        <div class="manage-header">
+            <h2 id="managePanelTitle">إدارة الوحدات والأسئلة</h2>
+            <button class="manage-close" onclick="closeManagePanel()" aria-label="إغلاق">✕</button>
+        </div>
+
+        <div class="manage-tabs">
+            <button class="manage-tab-btn active" id="manageTabUnit" onclick="switchManageTab('unit')">إضافة وحدة جديدة</button>
+            <button class="manage-tab-btn" id="manageTabQuestion" onclick="switchManageTab('question')">إضافة سؤال</button>
+            <button class="manage-tab-btn" id="manageTabList" onclick="switchManageTab('list')">حذف وإدارة المحتوى</button>
+        </div>
+
+        <!-- تبويب: إضافة وحدة -->
+        <div class="manage-tab-content" id="manageContentUnit">
+            <label class="manage-label">معرّف الوحدة (بالإنجليزية، بدون مسافات)</label>
+            <input type="text" id="newUnitId" class="manage-input" placeholder="مثال: unit5">
+
+            <label class="manage-label">اسم الوحدة بالعربية</label>
+            <input type="text" id="newUnitNameAr" class="manage-input" placeholder="مثال: الوحدة 5">
+
+            <label class="manage-label">اسم الوحدة بالإنجليزية</label>
+            <input type="text" id="newUnitNameEn" class="manage-input" placeholder="Example: Unit 5">
+
+            <button class="manage-action-btn" onclick="addNewUnit()">➕ إضافة الوحدة</button>
+            <div class="manage-feedback" id="unitFeedback"></div>
+        </div>
+
+        <!-- تبويب: إضافة سؤال -->
+        <div class="manage-tab-content" id="manageContentQuestion" style="display:none;">
+            <label class="manage-label">اختر الوحدة</label>
+            <select id="questionUnitSelect" class="manage-input"></select>
+
+            <label class="manage-label">نص السؤال بالعربية</label>
+            <textarea id="newQArText" class="manage-input manage-textarea" placeholder="اكتب نص السؤال بالعربية"></textarea>
+
+            <label class="manage-label">نص السؤال بالإنجليزية (اختياري)</label>
+            <textarea id="newQEnText" class="manage-input manage-textarea" placeholder="Write the question in English (optional)"></textarea>
+
+            <div class="manage-options-grid">
+                <div>
+                    <label class="manage-label">الخيار A</label>
+                    <input type="text" id="optA" class="manage-input">
+                </div>
+                <div>
+                    <label class="manage-label">الخيار B</label>
+                    <input type="text" id="optB" class="manage-input">
+                </div>
+                <div>
+                    <label class="manage-label">الخيار C</label>
+                    <input type="text" id="optC" class="manage-input">
+                </div>
+                <div>
+                    <label class="manage-label">الخيار D</label>
+                    <input type="text" id="optD" class="manage-input">
+                </div>
+            </div>
+
+            <label class="manage-label">الإجابة الصحيحة</label>
+            <select id="correctAnswerSelect" class="manage-input">
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+            </select>
+
+            <button class="manage-action-btn" onclick="addNewQuestion()">➕ إضافة السؤال</button>
+            <div class="manage-feedback" id="questionFeedback"></div>
+        </div>
+
+        <!-- تبويب: حذف وإدارة المحتوى (وحدات أساسية + مخصصة) -->
+        <div class="manage-tab-content" id="manageContentList" style="display:none;">
+            <p class="manage-section-title">الوحدات الأساسية (الأصلية)</p>
+            <div id="builtinUnitsList" class="custom-units-list"></div>
+
+            <p class="manage-section-title" style="margin-top:22px;">الوحدات المضافة</p>
+            <div id="customUnitsList" class="custom-units-list"></div>
+            <p class="manage-hint" id="noCustomUnitsMsg">لا توجد وحدات مخصّصة بعد. أضف وحدة من التبويب الأول.</p>
+
+            <div class="manage-danger-zone">
+                <button class="manage-danger-btn" onclick="resetAllHiddenUnits()">↺ استرجاع كل الوحدات المخفية</button>
+                <button class="manage-danger-btn danger" onclick="deleteAllCustomData()">🗑️ حذف جميع الوحدات والأسئلة المضافة</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizData = {
+        ar: {
+            title: "📝 الاختبار المدرسي الشامل",
+            restartText: "إعادة الاختبار Re-test",
+            successMsg: "تهانينا! لقد نجحت 🎉",
+            failMsg: "حظاً أوفر في المرة القادمة 📋",
+            scoreWord: "النتيجة النهائية للقسم المختار",
+            ofWord: "من أصل",
+            headers: { 
+                all: "جميع الأقسام والوحدات (147 سؤالاً)", 
+                invitations: "قسم: قبول ورفض الدعوات", 
+                unit2: "قسم: الوحدة 2 (المشكلات والحلول والتحقق من الفهم)",
+                unit3: "قسم: الوحدة 3 (طلب المعلومات، الأفعال والخيارات البديلة)",
+                unit4: "قسم: الوحدة 4 (الاقتراحات ووصف الطعام)", 
+                learning_tips: "قسم: نصائح التعلم (Learning Tips)",
+                did_you_know: "قسم: هل تعلم؟ (Did You Know)",
+                vocabulary: "قسم: مفردات عامة (مرادفات)",
+                smash_grab: "قسم: Smash and Grab (صفحة 22)",
+                crazy: "قسم: Crazy (صفحة 24)"
+            },
+            tabsText: { all: "جميع الأسئلة", inv: "الدعوات", u2: "الوحدة 2", u3: "الوحدة 3", u4: "الوحدة 4", lt: "نصائح التعلم", dyk: "هل تعلم؟", vocab: "مفردات", sg: "Smash and Grab", crazy: "Crazy" },
+            questions: [
+                // Invitations
+                { cat: "invitations", q: "1. ماذا تقول عندما تقبل دعوة؟", options: { A: "أنا آسف، لا أستطيع الحضور.", B: "شكرًا لك، يسعدني أن أحضر.", C: "ربما أبدًا.", D: "ابتعد." }, correct: "B" },
+                { cat: "invitations", q: "2. ماذا تقول عندما ترفض دعوة بأدب؟", options: { A: "أنا آسف، لكن لا أستطيع الحضور.", B: "يسعدني أن أحضر.", C: "نعم، بالتأكيد.", D: "شكرًا لدعوتي." }, correct: "A" },
+                { cat: "invitations", q: "3. لماذا يجب أن نجيب على الدعوات بأدب؟", options: { A: "لإظهار الاحترام", B: "لنكون وقحين.", C: "لتجنب الناس.", D: "لإرباك الآخرين." }, correct: "A" },
+                { cat: "invitations", q: "4. أي مما يأتي يُعد دعوة؟", options: { A: "هل يمكنك مساعدتي؟", B: "هل تود الحضور إلى حفلة عيد ميلادي؟", C: "أين تسكن؟", D: "ما اسمك؟" }, correct: "B" },
+                { cat: "invitations", q: "5. إذا حضرت المناسبة فإنك _ الدعوة.", options: { A: "ترفض", B: "تتجاهل", C: "تقبل", D: "تلغي" }, correct: "C" },
+                { cat: "invitations", q: "6. الرفض بأدب يساعد في الحفاظ على _ جيدة.", options: { A: "المشكلات", B: "العلاقات", C: "الأعذار", D: "الخلافات" }, correct: "B" },
+                { cat: "invitations", q: "7. أي كلمة تعني \"الموافقة على الدعوة\"؟", options: { A: "الرفض", B: "القبول", C: "المغادرة", D: "الاستبعاد" }, correct: "B" },
+                { cat: "invitations", q: "8. أي كلمة تعني \"عدم الموافقة على الدعوة\"؟", options: { A: "القبول", B: "الانضمام", C: "الرفض", D: "الحضور" }, correct: "C" },
+                
+                // Unit 2
+                { cat: "unit2", q: "9. لِمَ يُستخدم التعبير \"Sorry?\"؟", options: { A: "المشكلات", B: "الحلول", C: "التحقق من المعلومات", D: "الأفعال" }, correct: "C" },
+                { cat: "unit2", q: "10. التعبير \"Pardon?\" هو مثال على:", options: { A: "الفهم", B: "المشكلات", C: "التحقق من المعلومات", D: "الحلول" }, correct: "C" },
+                { cat: "unit2", q: "11. ماذا تعني عبارة \"What was that?\"؟", options: { A: "التحقق من المعلومات", B: "الأفعال", C: "المشكلات", D: "الخيارات البديلة" }, correct: "A" },
+                { cat: "unit2", q: "12. الجملة \"The oven is broken\" (الفرن مكسور) تعبر عن:", options: { A: "مشكلة", B: "حل", C: "فهم", D: "أفعال" }, correct: "A" },
+                { cat: "unit2", q: "13. الجملة \"The washing machine isn't working\" تعبر عن:", options: { A: "خيارات بديلة", B: "مشكلة", C: "حل", D: "فهم" }, correct: "B" },
+                { cat: "unit2", q: "14. العبارة \"We've got a bit of a problem\" تعبر عن:", options: { A: "مشكلة", B: "حل", C: "أفعال", D: "التحقق من المعلومات" }, correct: "A" },
+                { cat: "unit2", q: "15. العبارة \"Could you get someone to fix it?\" تعبر عن:", options: { A: "مشكلة", B: "حل", C: "فهم", D: "أفعال" }, correct: "B" },
+                { cat: "unit2", q: "16. العبارة \"Would it be possible to fix it?\" تعبر عن:", options: { A: "خيارات بديلة", B: "مشكلة", C: "حل", D: "فهم" }, correct: "C" },
+                { cat: "unit2", q: "17. أي من التعبيرات الآتية يدل على الحل؟", options: { A: "الفرن لا يعمل.", B: "هل يمكنك إصلاحه؟", C: "المعذرة؟", D: "كيف يمكنني المعرفة؟" }, correct: "B" },
+
+                // Unit 3
+                { cat: "unit3", q: "18. السؤال \"How will I know which notes I can use?\" يعبر عن:", options: { A: "الفهم", B: "الأفعال", C: "مشكلة", D: "حل" }, correct: "A" },
+                { cat: "unit3", q: "19. السؤال \"How can I tell how much money I need?\" يعبر عن:", options: { A: "مشكلة", B: "الفهم", C: "حل", D: "أفعال" }, correct: "B" },
+                { cat: "unit3", q: "20. السؤال \"What should I do next?\" يعبر عن:", options: { A: "الفهم", B: "الأفعال", C: "مشكلة", D: "التحقق من المعلومات" }, correct: "B" },
+                { cat: "unit3", q: "21. السؤال \"Then what do I do?\" يعبر عن:", options: { A: "مشكلة", B: "حل", C: "الأفعال", D: "الفهم" }, correct: "C" },
+                { cat: "unit3", q: "22. السؤال \"Do I need a ticket?\" يعبر عن:", options: { A: "طلب معلومات", B: "مشكلة", C: "حل", D: "التحقق من المعلومات" }, correct: "A" },
+                { cat: "unit3", q: "23. السؤال عن الاختيار بين ماكينات التذاكر العادية أو الخاصة يعبر عن:", options: { A: "مشكلة", B: "حل", C: "خيارات بديلة", D: "التحقق من المعلومات" }, correct: "C" },
+                { cat: "unit3", q: "24. الاختيار \"Tea or coffee?\" يمثل:", options: { A: "الفهم", B: "خيارات بديلة", C: "مشكلة", D: "حل" }, correct: "B" },
+                { cat: "unit3", q: "25. الاختيار \"Bus or train?\" يمثل:", options: { A: "خيارات بديلة", B: "مشكلة", C: "حل", D: "أفعال" }, correct: "A" },
+                { cat: "unit3", q: "26. أي من التعبيرات الآتية يدل على الفهم؟", options: { A: "كيف يمكنني التمييز...؟", B: "هل يمكنك إصلاحه؟", C: "عفواً؟", D: "شاي أم قهوة؟" }, correct: "A" },
+                { cat: "unit3", q: "27. أي من التعبيرات الآتية يدل على الأفعال؟", options: { A: "كيف سأعرف...？", B: "ماذا أفعل بعد ذلك؟", C: "المعذرة؟", D: "الفرن مكسور." }, correct: "B" },
+                { cat: "unit3", q: "28. أي من التعبيرات الآتية يدل على طلب معلومات؟", options: { A: "هل أحتاج إلى تذكرة؟", B: "الفرن مكسور.", C: "هل يمكنك إصلاحه؟", D: "عفواً؟" }, correct: "A" },
+
+                // Unit 4
+                { cat: "unit4", q: "29. أي تعبير يعني \"هل تريد أن نفعل شيئاً معاً؟\"", options: { A: "فلنذهب.", B: "بإمكاننا الذهاب.", C: "هل نذهب؟", D: "لدي فكرة." }, correct: "C" },
+                { cat: "unit4", q: "30. أي تعبير يعني \"ما رأيك في...؟\"", options: { A: "Let's + V1", B: "What about + V-ing", C: "Shall we + V1", D: "We could + V1" }, correct: "B" },
+                { cat: "unit4", q: "31. أي تعبير يعني \"يمكننا أن...\"؟", options: { A: "We could + V1", B: "Let's + V1", C: "Shall we + V1", D: "What about + V-ing" }, correct: "A" },
+                { cat: "unit4", q: "32. أي تعبير يعني \"فلنفعلها معاً\"؟", options: { A: "لدي فكرة", B: "Shall we + V1", C: "Let's + V1", D: "What about + V-ing" }, correct: "C" },
+                { cat: "unit4", q: "33. أي تعبير يعني \"لدي فكرة\"？", options: { A: "فلنذهب.", B: "لدي فكرة.", C: "بإمكاننا الذهاب.", D: "هل نذهب؟" }, correct: "B" },
+                { cat: "unit4", q: "34. ماذا يأتي بعد التعبير \"Shall we\"؟", options: { A: "فعل مضاف له ing", B: "التصريف الثاني للفعل", C: "التصريف الثالث للفعل", D: "V1 (فعل مصدر مجرد)" }, correct: "D" },
+                { cat: "unit4", q: "35. ماذا يأتي بعد التعبير \"What about\"؟", options: { A: "فعل مصدر مجرد", B: "V-ing (فعل مضاف له ing)", C: "التصريف الثاني للفعل", D: "التصريف الثالث" }, correct: "B" },
+                { cat: "unit4", q: "36. ماذا يأتي بعد التعبير \"Let's\"؟", options: { A: "V1 (فعل مصدر مجرد)", B: "فعل مضاف له ing", C: "التصريف الثاني", D: "التصريف الثالث" }, correct: "A" },
+                { cat: "unit4", q: "37. ماذا يأتي بعد التعبير \"We could\"؟", options: { A: "V1 (فعل مصدر مجرد)", B: "فعل مضاف له ing", C: "التصريف الثاني", D: "التصريف الثالث" }, correct: "A" },
+                { cat: "unit4", q: "38. اختر الجملة الصحيحة قواعدياً:", options: { A: "What about go out?", B: "What about going out?", C: "What about went out?", D: "What about goes out?" }, correct: "B" },
+                { cat: "unit4", q: "39. اختر الجملة الصحيحة قواعدياً:", options: { A: "Let's going home.", B: "Let's goes home.", C: "Let's go home.", D: "Let's went home." }, correct: "C" },
+                { cat: "unit4", q: "40. اختر الجملة الصحيحة قواعدياً:", options: { A: "Shall we watching a movie?", B: "Shall we watch a movie?", C: "Shall we watched a movie?", D: "Shall we watches a movie?" }, correct: "B" },
+                { cat: "unit4", q: "41. ما هو الجزء الأول عند وصف الطعام؟", options: { A: "Opinion (الرأي)", B: "المكونات", C: "Dish (الطبق/الوجبة)", D: "السعر" }, correct: "C" },
+                { cat: "unit4", q: "42. ماذا يأتي بعد الطبق (Dish) مباشرة في وصف الطعام؟", options: { A: "المكونات", B: "Opinion (الرأي)", C: "اللون", D: "السعر" }, correct: "B" },
+                { cat: "unit4", q: "43. ما هو الترتيب الصحيح لوصف الطعام؟", options: { A: "الرأي ← الطبق ← المكونات", B: "المكونات ← الرأي ← الطبق", C: "الطبق ← الرأي ← المكونات", D: "الطبق ← المكونات ← الرأي" }, correct: "C" },
+
+                // Learning Tips
+                { cat: "learning_tips", q: "44. قبل الاستماع للتفاصيل، يجب أن تحاول فهم:", options: { A: "كل كلمة بدقة", B: "المعنى العام للنص", C: "القواعد النحوية", D: "المفردات الجديدة" }, correct: "B" },
+                { cat: "learning_tips", q: "45. قبل الاستماع، يجب عليك التفكير في:", options: { A: "ما هي المعلومات التي تود معرفتها", B: "المعلم", C: "الإجابات النموذجية", D: "الاختبار" }, correct: "A" },
+                { cat: "learning_tips", q: "46. يجب أن تستمع فقط لـ:", options: { A: "كل كلمة تقال", B: "المعلومة التي تبحث عنها وتريدها", C: "الكلمات الجديدة", D: "الكلمات الصعبة" }, correct: "B" },
+                { cat: "learning_tips", q: "47. الاستماع إلى نص قصير يمكن أن يساعدك في التدرب على:", options: { A: "الكتابة", B: "الاستماع من أجل التفاصيل", C: "القراءة", D: "الترجمة" }, correct: "B" },
+                { cat: "learning_tips", q: "48. ليست فكرة جيدة أن تستمع إلى:", options: { A: "نص قصير", B: "محادثة طويلة جداً ومستمرة", C: "حوار ثنائي", D: "قصة قصيرة" }, correct: "B" },
+                { cat: "learning_tips", q: "49. لا يجب أن تقلق إذا لم تقل:", options: { A: "الكلمات الجديدة", B: "نفس الكلمات والعبارات بالضبط كما في المحادثة", C: "الكلمات المعقدة", D: "الجمل الطويلة" }, correct: "B" },
+                { cat: "learning_tips", q: "50. يجب عليك استخدام كلمات تحمل:", options: { A: "معنىً مختلفاً تماماً", B: "معنىً مشابهاً (مترادفات)", C: "معنىً مخفياً", D: "معنىً مزدوجاً" }, correct: "B" },
+                { cat: "learning_tips", q: "51. كلما حاولت وتدربت أكثر:", options: { A: "ستصبح الأمور أصعب", B: "ستصبح الأمور أسهل بكثير", C: "ستأخذ وقتاً أطول", D: "ستصبح أبطأ" }, correct: "B" },
+                { cat: "learning_tips", q: "52. قبل الاستماع، قم بقراءة:", options: { A: "القصة كاملة", B: "التمرين والأسئلة أولاً", C: "القاموس", D: "الدرس السابق" }, correct: "B" },
+                { cat: "learning_tips", q: "53. قبل بدء الاستماع، يجب أن تعرف:", options: { A: "ما الذي تستمع لأجله", B: "الإجابات مسبقاً", C: "القواعد", D: "الإملاء والتهجئة" }, correct: "A" },
+                { cat: "learning_tips", q: "54. قد تكون الإجابة عبارة عن:", options: { A: "رقم أو كلمة واحدة", B: "جملة طويلة", C: "فقرة كاملة", D: "صورة توضيحية" }, correct: "A" },
+                { cat: "learning_tips", q: "55. عند مراجعة وتدقيق الإجابات، فكّر في سبب كونها:", options: { A: "صحيحة أو خاطئة", B: "طويلة أو قصيرة", C: "سهلة أو صعبة", D: "جديدة أو قديمة" }, correct: "A" },
+                { cat: "learning_tips", q: "56. التحدث عبر الهاتف يمكن أن يكون صعباً لأنك:", options: { A: "الخط يكون مشغولاً دائماً", B: "لا يمكنك رؤية الشخص الذي تتحدث إليه", C: "المكالمة مكلفة مالياً", D: "المكان يكون صاخباً" }, correct: "B" },
+                { cat: "learning_tips", q: "57. إذا لم تفهم ما يقال، اطلب من الناس أن:", options: { A: "يعيدوا ويكرروا الكلام", B: "يتوقفوا عن الحديث", C: "يكتبوا الإجابة", D: "يغيروا الموضوع" }, correct: "A" },
+                { cat: "learning_tips", q: "58. من المهم بشكل خاص تكرار وإعادة:", options: { A: "الأسماء والعناوين", B: "الأسئلة والأجوبة العامة", C: "الدروس والواجبات المنزلية", D: "الأرقام والتواريخ" }, correct: "A" },
+                { cat: "learning_tips", q: "59. عندما تسمع تعبيرات أو أسئلة جديدة، استمع لـ:", options: { A: "الأفعال فقط", B: "الكلمات أو المقاطع الصوتية المشددة (نبرة الصوت)", C: "الأسماء", D: "الصفات" }, correct: "B" },
+                { cat: "learning_tips", q: "60. للمساعدة في استمرار المحادثة وعدم انقطاعها:", options: { A: "قم بطرح أسئلة أنت أيضاً", B: "ابقَ صامتاً تماماً", C: "غيّر موضوع الحديث فجأة", D: "أنهِ المكالمة فوراً" }, correct: "A" },
+                { cat: "learning_tips", q: "61. قبل وصف حالة معينة، فكّر في:", options: { A: "ما قد يطلبه أو يسألك عنه الناس", B: "ما قد يرتديه الأشخاص", C: "ما قد يشتريه الزبائن", D: "ما قد يقرأه الآخرون" }, correct: "A" },
+                { cat: "learning_tips", q: "62. المثال الذي ذُكر في النص كان يعبر عن التواجد في:", options: { A: "المصرف / البنك", B: "الصيدلية (chemist's)", C: "المدرسة", D: "المطار" }, correct: "B" },
+                { cat: "learning_tips", q: "63. عندما تتعلم تعبيراً جديداً بالإنجليزية:", options: { A: "تجاهله تماماً", B: "تدرّب عليه واستخدمه بكلمات مختلفة", C: "ترجمه حرفياً فقط", D: "احفظه لمرة واحدة فقط" }, correct: "B" },
+
+                // Did You Know
+                { cat: "did_you_know", q: "64. في المملكة المتحدة (UK) يذهب الناس إلى الـ _.", options: { A: "movies", B: "cinema", C: "theatre", D: "subway" }, correct: "B" },
+                { cat: "did_you_know", q: "65. في الولايات المتحدة (US) يذهب الناس إلى الـ _.", options: { A: "cinema", B: "tube", C: "movies", D: "flat" }, correct: "C" },
+                { cat: "did_you_know", q: "66. ماذا يعني الاختصار \"bdm\"؟", options: { A: "لكل أسبوع", B: "شقة", C: "غرفة نوم (bedroom)", D: "الحد الأدنى" }, correct: "C" },
+                { cat: "did_you_know", q: "67. ماذا يعني الاختصار \"ff\"؟", options: { A: "مفروشة بالكامل (fully furnished)", B: "الطابق الأول", C: "طعام مجاني", D: "وجبة سريعة" }, correct: "A" },
+                { cat: "did_you_know", q: "68. ماذا يعني الاختصار \"pw\"؟", options: { A: "لكل أسبوع (per week)", B: "عمل جزئي", C: "طريق خاص", D: "طريق عام" }, correct: "A" },
+                { cat: "did_you_know", q: "69. ماذا يعني الاختصار \"apt\"؟", options: { A: "شقة (apartment)", B: "موعد", C: "تقديم طلب", D: "متقدم لوظيفة" }, correct: "A" },
+                { cat: "did_you_know", q: "70. ماذا يعني الاختصار \"min\" في الإعلانات؟", options: { A: "دقيقة", B: "الحد الأدنى (minimum)", C: "ثانوي", D: "ناقص" }, correct: "B" },
+                { cat: "did_you_know", q: "71. ماذا يعني الاختصار \"inc\"؟", options: { A: "زيادة", B: "دخل مالي", C: "شاملاً / متضمناً (including)", D: "في الداخل" }, correct: "C" },
+                { cat: "did_you_know", q: "72. ماذا يعني الاختصار \"n/s\"؟", options: { A: "لغير المدخنين (non-smoking)", B: "شمال-جنوب", C: "خارج الخدمة", D: "غير آمن" }, correct: "A" },
+                { cat: "did_you_know", q: "73. ماذا يعني الاختصار \"tel/ph\"؟", options: { A: "تلفزيون", B: "هاتف (telephone)", C: "تلغراف", D: "عدسة مقربة" }, correct: "B" },
+                { cat: "did_you_know", q: "74. في بريطانيا (UK)، يقول الناس عن الشقة السكنية _.", options: { A: "apartment", B: "flat", C: "house", D: "room" }, correct: "B" },
+                { cat: "did_you_know", q: "75. في أمريكا (US)، يقول الناس عن الشقة السكنية _.", options: { A: "flat", B: "apartment", C: "villa", D: "cottage" }, correct: "B" },
+                { cat: "did_you_know", q: "76. مترو أنفاق لندن يُعرف باسم الـ _.", options: { A: "subway", B: "tube", C: "railway", D: "station" }, correct: "B" },
+                { cat: "did_you_know", q: "77. في أمريكا، يُطلق على قطارات الأنفاق اسم الـ _.", options: { A: "tube", B: "subway", C: "metro", D: "tunnel" }, correct: "B" },
+                { cat: "did_you_know", q: "78. تُستخدم العملة \"الدولار\" في كل من _.", options: { A: "كندا، أمريكا، أستراليا ونيوزيلندا", B: "بريطانيا فقط", C: "كندا فقط", D: "أستراليا فقط" }, correct: "A" },
+                { cat: "did_you_know", q: "79. مصطلح عامي بديل للدولار هو _.", options: { A: "quid", B: "bucks", C: "pounds", D: "cents" }, correct: "B" },
+                { cat: "did_you_know", q: "80. الجنيه الإسترليني (£) يُستخدم في _.", options: { A: "أمريكا", B: "المملكة المتحدة (UK)", C: "كندا", D: "أستراليا" }, correct: "B" },
+                { cat: "did_you_know", q: "81. مصطلح عامي بديل للجنيه الإسترليني هو _.", options: { A: "bucks", B: "dollars", C: "quid", D: "cash" }, correct: "C" },
+                { cat: "did_you_know", q: "82. في كندا وأمريكا، الـ \"sink\" هو المكان الذي تغسل فيه _.", options: { A: "ملابسك", B: "الأطباق والقدور", C: "يديك ووجهك", D: "سيارتك" }, correct: "C" },
+                { cat: "did_you_know", q: "83. في بريطانيا وأستراليا ونيوزيلندا، تُغسل الأطباق في الـ _.", options: { A: "basin", B: "sink", C: "bath", D: "bucket" }, correct: "B" },
+                { cat: "did_you_know", q: "84. خمسون بالمائة من البريطانيين يأكلون السمك والبطاطا (fish and chips) _.", options: { A: "كل يوم", B: "مرة في الشهر", C: "مرة في السنة", D: "كل أسبوع" }, correct: "B" },
+                { cat: "did_you_know", q: "85. هناك أكثر من _ محل لبيع السمك والبطاطا في بريطانيا.", options: { A: "1,000", B: "5,000", C: "10,000", D: "20,000" }, correct: "C" },
+                { cat: "did_you_know", q: "86. الطعام والوجبة المفضلة والأكثر مبيعاً في بريطانيا هي _.", options: { A: "fish and chips", B: "chicken tikka masala", C: "pizza", D: "burgers" }, correct: "B" },
+                { cat: "did_you_know", q: "87. كيف ننطق الرقم \"0\" في أرقام الهاتف عادةً؟", options: { A: "zero", B: "one", C: "dot", D: "slash" }, correct: "A" },
+                { cat: "did_you_know", q: "88. كيف ننطق اختصار التكرار للرقم \"333\"؟", options: { A: "triple three", B: "three hundred and thirty-three", C: "double three", D: "three by three" }, correct: "A" },
+                { cat: "did_you_know", q: "89. ماذا تسمى الحروف الصغيرة مثل \"aaa\"؟", options: { A: "upper case", B: "lower case", C: "capital letters", D: "small words" }, correct: "B" },
+                { cat: "did_you_know", q: "90. ماذا تسمى الحروف الكبيرة مثل \"AAA\"؟", options: { A: "lower case", B: "upper case", C: "title case", D: "sentence case" }, correct: "B" },
+                { cat: "did_you_know", q: "91. كيف ننطق هذا الرمز \"/\" في عناوين المواقع الإلكترونية؟", options: { A: "dot", B: "slash", C: "at", D: "dash" }, correct: "B" },
+                { cat: "did_you_know", q: "92. كيف ننطق هذا الرمز \"@\" في البريد الإلكتروني؟", options: { A: "dot", B: "slash", C: "at", D: "and" }, correct: "C" },
+                { cat: "did_you_know", q: "93. كيف ننطق النقطة \".\" داخل عنوان الإيميل؟", options: { A: "point", B: "stop", C: "dot", D: "comma" }, correct: "C" },
+                { cat: "did_you_know", q: "94. أي كلمة تستخدم في الإنجليزية البريطانية لتعني الصيدلية؟", options: { A: "drugstore", B: "chemist", C: "mall", D: "store" }, correct: "B" },
+                { cat: "did_you_know", q: "95. أي كلمة تستخدم في الإنجليزية الأمريكية لتعني الصيدلية؟", options: { A: "chemist", B: "pharmacy", C: "drugstore", D: "clinic" }, correct: "C" },
+                { cat: "did_you_know", q: "96. \"منزل صغير متصل بمنزل واحد أو أكثر من المنازل المشابهة\" يشير هذا إلى المتلاصق أو المتوالي:", options: { A: "flat", B: "apartment", C: "terrace house", D: "villa" }, correct: "C" },
+                { cat: "did_you_know", q: "97. أي الدول تستخدم كلمة \"unit\" للإشارة إلى الشقة السكنية؟", options: { A: "كندا وأمريكا", B: "نيوزيلندا وأستراليا", C: "بريطانيا وكندا", D: "أمريكا وأستراليا" }, correct: "B" },
+                { cat: "did_you_know", q: "98. في بريطانيا وأستراليا، تغسل وجهك ويديك في الـ _.", options: { A: "sink", B: "basin", C: "bath", D: "shower" }, correct: "B" },
+                { cat: "did_you_know", q: "99. 20 dollars تعادل بالعامية الأمريكية: 20 _.", options: { A: "quids", B: "pounds", C: "bucks", D: "cents" }, correct: "C" },
+                { cat: "did_you_know", q: "100. 20 pounds تعادل بالعامية البريطانية: 20 _.", options: { A: "bucks", B: "quids", C: "dollars", D: "pence" }, correct: "B" },
+
+                // Vocabulary - مفردات عامة (مرادفات)
+                { cat: "vocabulary", q: "1. ما هو مرادف الكلمة \"Accumulate\"؟", options: { A: "Gather", B: "Ruins", C: "Broken / Harmed", D: "Said" }, correct: "A" },
+                { cat: "vocabulary", q: "2. ما هو مرادف الكلمة \"Obliged to\"؟", options: { A: "Priest", B: "Famous", C: "Had to", D: "Mended / Fixed" }, correct: "C" },
+                { cat: "vocabulary", q: "3. ما هو مرادف الكلمة \"Claimed\"؟", options: { A: "Rich", B: "Said", C: "Had to", D: "Floors" }, correct: "B" },
+                { cat: "vocabulary", q: "4. ما هو مرادف الكلمة \"Extraordinarily Similar\"؟", options: { A: "Like", B: "Found", C: "Quiet", D: "Pieces" }, correct: "A" },
+                { cat: "vocabulary", q: "5. ما هو مرادف الكلمة \"Immediately\"؟", options: { A: "At once", B: "Position", C: "Reporter", D: "Sure" }, correct: "A" },
+                { cat: "vocabulary", q: "6. ما هو مرادف الكلمة \"Convinced\"؟", options: { A: "Sure", B: "Get", C: "Told", D: "Covers" }, correct: "A" },
+                { cat: "vocabulary", q: "7. ما هو مرادف الكلمة \"Vicar\"؟", options: { A: "Famous", B: "Priest", C: "Floors", D: "Quiet" }, correct: "B" },
+                { cat: "vocabulary", q: "8. ما هو مرادف الكلمة \"Repaired\"؟", options: { A: "Mended / Fixed", B: "Sacked", C: "Under", D: "Ashamed" }, correct: "A" },
+                { cat: "vocabulary", q: "9. ما هو مرادف الكلمة \"Damaged\"؟", options: { A: "Get", B: "Broken / Harmed", C: "Position", D: "Print" }, correct: "B" },
+                { cat: "vocabulary", q: "10. ما هو مرادف الكلمة \"Silent\"؟", options: { A: "Quiet", B: "Give up", C: "Rich", D: "Ruins" }, correct: "A" },
+                { cat: "vocabulary", q: "11. ما هو مرادف الكلمة \"With a start\"؟", options: { A: "Suddenly / In surprise", B: "Discovered", C: "Pieces", D: "Famous" }, correct: "A" },
+                { cat: "vocabulary", q: "12. ما هو مرادف الكلمة \"Caught sight of\"؟", options: { A: "Special right", B: "Noticed / Saw", C: "Told", D: "Reporter" }, correct: "B" },
+                { cat: "vocabulary", q: "13. ما هو مرادف الكلمة \"Explored\"؟", options: { A: "Hesitantly", B: "Print", C: "Discovered", D: "Floors" }, correct: "C" },
+                { cat: "vocabulary", q: "14. ما هو مرادف الكلمة \"Ancient\"؟", options: { A: "Very old", B: "Sure", C: "Under", D: "Covers" }, correct: "A" },
+                { cat: "vocabulary", q: "15. ما هو مرادف الكلمة \"Prosperous\"؟", options: { A: "Rich", B: "Quiet", C: "Sacked", D: "Pieces" }, correct: "A" },
+                { cat: "vocabulary", q: "16. ما هو مرادف الكلمة \"Storeys\"؟", options: { A: "Floors", B: "Get", C: "Found", D: "Ashamed" }, correct: "A" },
+                { cat: "vocabulary", q: "17. ما هو مرادف الكلمة \"Beneath\"؟", options: { A: "Under", B: "Position", C: "Mended / Fixed", D: "Famous" }, correct: "A" },
+                { cat: "vocabulary", q: "18. ما هو مرادف الكلمة \"Fragments\"؟", options: { A: "Pieces", B: "Reporter", C: "Told", D: "Give up" }, correct: "A" },
+                { cat: "vocabulary", q: "19. ما هو مرادف الكلمة \"Remains\"؟", options: { A: "Ruins", B: "Get", C: "Quiet", D: "Interested" }, correct: "A" },
+                { cat: "vocabulary", q: "20. ما هو مرادف الكلمة \"Receive\"؟", options: { A: "Get", B: "Discovered", C: "Covers", D: "Sacked" }, correct: "A" },
+                { cat: "vocabulary", q: "21. ما هو مرادف الكلمة \"Sacrifice\"؟", options: { A: "Found", B: "Give up", C: "Floors", D: "Said" }, correct: "B" },
+                { cat: "vocabulary", q: "22. ما هو مرادف الكلمة \"Privilege\"؟", options: { A: "Special right", B: "Hesitantly", C: "Print", D: "Quiet" }, correct: "A" },
+                { cat: "vocabulary", q: "23. ما هو مرادف الكلمة \"Curious\"؟", options: { A: "Interested", B: "Position", C: "Mended / Fixed", D: "Get" }, correct: "A" },
+                { cat: "vocabulary", q: "24. ما هو مرادف الكلمة \"Embarrassed\"؟", options: { A: "Ashamed", B: "Covers", C: "Rich", D: "Discovered" }, correct: "A" },
+                { cat: "vocabulary", q: "25. ما هو مرادف الكلمة \"Discovered\"؟", options: { A: "Found", B: "Sacked", C: "Suddenly / In surprise", D: "Told" }, correct: "A" },
+                { cat: "vocabulary", q: "26. ما هو مرادف الكلمة \"Status\"؟", options: { A: "Position", B: "Very old", C: "Pieces", D: "Get" }, correct: "A" },
+                { cat: "vocabulary", q: "27. ما هو مرادف الكلمة \"Journalist\"؟", options: { A: "Reporter", B: "Famous", C: "Print", D: "Under" }, correct: "A" },
+                { cat: "vocabulary", q: "28. ما هو مرادف الكلمة \"Instructed\"؟", options: { A: "Told", B: "Floors", C: "Rich", D: "Noticed / Saw" }, correct: "A" },
+                { cat: "vocabulary", q: "29. ما هو مرادف الكلمة \"Well-known\"؟", options: { A: "Famous", B: "Give up", C: "Quiet", D: "Position" }, correct: "A" },
+                { cat: "vocabulary", q: "30. ما هو مرادف الكلمة \"Publish\"؟", options: { A: "Print", B: "Ruins", C: "Ashamed", D: "Had to" }, correct: "A" },
+                { cat: "vocabulary", q: "31. ما هو مرادف الكلمة \"Surrounds\"؟", options: { A: "Covers", B: "Get", C: "Said", D: "Reporter" }, correct: "A" },
+                { cat: "vocabulary", q: "32. ما هو مرادف الكلمة \"Fired\"؟", options: { A: "Sacked", B: "Mended / Fixed", C: "Like", D: "Interested" }, correct: "A" },
+                { cat: "vocabulary", q: "33. ما هو مرادف الكلمة \"Reluctantly\"؟", options: { A: "Hesitantly", B: "Found", C: "Special right", D: "Floors" }, correct: "A" },
+
+                // Smash and Grab (Page 22)
+                { cat: "smash_grab", q: "1. ما هو مرادف الكلمة \"expensive\"؟", options: { A: "costly", B: "nearly", C: "helpers", D: "remained" }, correct: "A" },
+                { cat: "smash_grab", q: "2. ما هو مرادف الكلمة \"almost\"؟", options: { A: "broken", B: "many", C: "nearly", D: "looking" }, correct: "C" },
+                { cat: "smash_grab", q: "3. ما هو مرادف الكلمة \"assistants\"؟", options: { A: "helpers", B: "costly", C: "remained", D: "many" }, correct: "A" },
+                { cat: "smash_grab", q: "4. ما هو مرادف الكلمة \"gazing\"؟", options: { A: "looking", B: "broken", C: "costly", D: "many" }, correct: "A" },
+                { cat: "smash_grab", q: "5. ما هو مرادف الكلمة \"several\"؟", options: { A: "remained", B: "many", C: "helpers", D: "looking" }, correct: "B" },
+                { cat: "smash_grab", q: "6. ما هو مرادف الكلمة \"stayed\"؟", options: { A: "remained", B: "nearly", C: "broken", D: "costly" }, correct: "A" },
+                { cat: "smash_grab", q: "7. ما هو مرادف الكلمة \"smashed\"؟", options: { A: "broken", B: "helpers", C: "nearly", D: "looking" }, correct: "A" },
+
+                // Crazy (Page 24)
+                { cat: "crazy", q: "1. ما هو مرادف الكلمة \"demonstrated\"؟", options: { A: "showed", B: "residents", C: "guarded", D: "offered" }, correct: "A" },
+                { cat: "crazy", q: "2. ما هو مرادف الكلمة \"inhabitants\"؟", options: { A: "act", B: "residents", C: "showed", D: "man-made" }, correct: "B" },
+                { cat: "crazy", q: "3. ما هو مرادف الكلمة \"pretend\"؟", options: { A: "act", B: "stayed", C: "offered", D: "showed" }, correct: "A" },
+                { cat: "crazy", q: "4. ما هو مرادف الكلمة \"remained\"؟", options: { A: "guarded", B: "stayed", C: "man-made", D: "residents" }, correct: "B" },
+                { cat: "crazy", q: "5. ما هو مرادف الكلمة \"patrolled\"؟", options: { A: "guarded", B: "act", C: "offered", D: "showed" }, correct: "A" },
+                { cat: "crazy", q: "6. ما هو مرادف الكلمة \"volunteered\"؟", options: { A: "residents", B: "stayed", C: "offered", D: "man-made" }, correct: "C" },
+                { cat: "crazy", q: "7. ما هو مرادف الكلمة \"artificial\"؟", options: { A: "man-made", B: "guarded", C: "act", D: "showed" }, correct: "A" }
+            ]
+        },
+        en: {
+            title: "📝 Comprehensive School Quiz",
+            restartText: "Restart Quiz",
+            successMsg: "Excellent! You passed 🎉",
+            failMsg: "Better luck next time 📋",
+            scoreWord: "Final score for selected category",
+            ofWord: "out of",
+            headers: { 
+                all: "Showing All Sections (147 Questions)", 
+                invitations: "Section: Accepting & Refusing Invitations", 
+                unit2: "Section: Unit 2 (Problems, Solutions & Checking Info)",
+                unit3: "Section: Unit 3 (Asking for Info, Actions & Alternatives)",
+                unit4: "Section: Unit 4 (Suggestions & Food Description)", 
+                learning_tips: "Section: Learning Tips",
+                did_you_know: "Section: Did You Know",
+                vocabulary: "Section: General Vocabulary (Synonyms)",
+                smash_grab: "Section: Smash and Grab (Page 22)",
+                crazy: "Section: Crazy (Page 24)"
+            },
+            tabsText: { all: "All Questions", inv: "Invitations", u2: "Unit 2", u3: "Unit 3", u4: "Unit 4", lt: "Learning Tips", dyk: "Did You Know", vocab: "Vocabulary", sg: "Smash and Grab", crazy: "Crazy" },
+            questions: []
+        }
+    };
+
+    // مصفوفة الإنجليزية ترث نفس الهيكل من العربية تلقائياً لتفادي كبر حجم الكود، مع تفعيل خاصية تبديل المحتوى.
+    quizData.en.questions = JSON.parse(JSON.stringify(quizData.ar.questions));
+    // نقوم بتعديل مصفوفة الإنجليزي لتأخذ الأسئلة الأصلية باللغة الإنجليزية كما وضعتها سابقاً
+    const englishQuestionsMap = {
+        "invitations": [
+            { q: "1. What do you say when you accept an invitation?", options: { A: "I'm sorry, I can't come.", B: "Thank you, I'd love to come.", C: "Maybe never.", D: "Go away." }, correct: "B" },
+            { q: "2. What do you say when you politely refuse an invitation?", options: { A: "I'm sorry, but I can't come.", B: "I'd love to come.", C: "Yes, definitely.", D: "Thanks for inviting me." }, correct: "A" },
+            { q: "3. Why should we reply to invitations politely?", options: { A: "To show respect.", B: "To be rude.", C: "To avoid people.", D: "To confuse others." }, correct: "A" },
+            { q: "4. Which of the following is an invitation?", options: { A: "Can you help me?", B: "Would you like to come to my birthday party?", C: "Where do you live?", D: "What's your name?" }, correct: "B" },
+            { q: "5. If you attend the event, you _ the invitation.", options: { A: "refuse", B: "ignore", C: "accept", D: "cancel" }, correct: "C" },
+            { q: "6. Refusing politely helps maintain good _.", options: { A: "problems", B: "relationships", C: "excuses", D: "disagreements" }, correct: "B" },
+            { q: "7. Which word means 'agreeing to an invitation'?", options: { A: "Refusal", B: "Acceptance", C: "Leaving", D: "Excluding" }, correct: "B" },
+            { q: "8. Which word means 'not agreeing to an invitation'?", options: { A: "Acceptance", B: "Joining", C: "Refusal", D: "Attending" }, correct: "C" }
+        ],
+        "unit2": [
+            { q: "9. Why is the expression 'Sorry?' used?", options: { A: "Problems", B: "Solutions", C: "Checking Information", D: "Actions" }, correct: "C" },
+            { q: "10. The expression 'Pardon?' is an example of:", options: { A: "Understanding", B: "Problems", C: "Checking Information", D: "Solutions" }, correct: "C" },
+            { q: "11. What does the phrase 'What was that?' mean?", options: { A: "Checking Information", B: "Actions", C: "Problems", D: "Alternative choices" }, correct: "A" },
+            { q: "12. The sentence 'The oven is broken' expresses a:", options: { A: "Problem", B: "Solution", C: "Understanding", D: "Action" }, correct: "A" },
+            { q: "13. The sentence 'The washing machine isn't working' expresses a:", options: { A: "Alternative choices", B: "Problem", C: "Solution", D: "Understanding" }, correct: "B" },
+            { q: "14. The phrase 'We've got a bit of a problem' expresses a:", options: { A: "Problem", B: "Solution", C: "Action", D: "Checking Info" }, correct: "A" },
+            { q: "15. The phrase 'Could you get someone to fix it?' expresses a:", options: { A: "Problem", B: "Solution", C: "Understanding", D: "Action" }, correct: "B" },
+            { q: "16. The phrase 'Would it be possible to fix it?' expresses a:", options: { A: "Alternative choices", B: "Problem", C: "Solution", D: "Understanding" }, correct: "C" },
+            { q: "17. Which of the following expressions indicates a Solution?", options: { A: "The oven isn't working.", B: "Could you fix it?", C: "Sorry?", D: "How can I tell?" }, correct: "B" }
+        ],
+        "unit3": [
+            { q: "18. The question 'How will I know which notes I can use?' expresses:", options: { A: "Understanding", B: "Actions", C: "Problem", D: "Solution" }, correct: "A" },
+            { q: "19. The question 'How can I tell how much money I need?' expresses:", options: { A: "Problem", B: "Understanding", C: "Solution", D: "Action" }, correct: "B" },
+            { q: "20. The question 'What should I do next?' expresses:", options: { A: "Understanding", B: "Actions", C: "Problem", D: "Checking Info" }, correct: "B" },
+            { q: "21. The question 'Then what do I do?' expresses:", options: { A: "Problem", B: "Solution", C: "Actions", D: "Understanding" }, correct: "C" },
+            { q: "22. The question 'Do I need a ticket?' expresses:", options: { A: "Asking for Information", B: "Problem", C: "Solution", D: "Checking Info" }, correct: "A" },
+            { q: "23. Asking about choosing between standard or special ticket machines expresses:", options: { A: "Problem", B: "Solution", C: "Alternative Choices", D: "Checking Info" }, correct: "C" },
+            { q: "24. The choice 'Tea or coffee?' represents:", options: { A: "Understanding", B: "Alternative Choices", C: "Problem", D: "Solution" }, correct: "B" },
+            { q: "25. The choice 'Bus or train?' represents:", options: { A: "Alternative Choices", B: "Problem", C: "Solution", D: "Actions" }, correct: "A" },
+            { q: "26. Which of the following expressions indicates Understanding?", options: { A: "How can I tell...?", B: "Could you fix it?", C: "Sorry?", d: "Tea or coffee?" }, correct: "A" },
+            { q: "27. Which of the following expressions indicates Actions?", options: { A: "How will I know...?", B: "Then what do I do?", C: "Pardon?", D: "The oven is broken." }, correct: "B" },
+            { q: "28. Which of the following expressions indicates Asking for Information?", options: { A: "Do I need a ticket?", B: "The oven is broken.", C: "Could you fix it?", D: "Pardon?" }, correct: "A" }
+        ]
+    };
+
+    // دمج باقي كود الترجمة النصي للإنجليزي لكي يظهر بشكل سليم
+    quizData.ar.questions.forEach((q, idx) => {
+        if(idx >= 28) { 
+            quizData.en.questions[idx].q = quizData.ar.questions[idx].q; 
+        }
+    });
+    // استبدال المجموعات الثلاث الأولى بالكامل بأسئلة الإنجليزية الصافية
+    let enQuestionsIndex = 0;
+    ['invitations', 'unit2', 'unit3'].forEach(cat => {
+        englishQuestionsMap[cat].forEach(item => {
+            let found = quizData.en.questions.find((q, index) => index === enQuestionsIndex);
+            if(found) {
+                found.q = item.q;
+                found.options = item.options;
+            }
+            enQuestionsIndex++;
+        });
+    });
+
+    // استبدال نصوص أسئلة المفردات الجديدة (vocabulary, smash_grab, crazy) بالإنجليزية الصحيحة
+    // باستخدام مطابقة حسب التصنيف (cat) بدلاً من الفهرس لضمان الدقة
+    const englishVocabMap = {
+        vocabulary: [
+            { q: '1. What is the synonym of "Accumulate"?', options: { A: "Gather", B: "Ruins", C: "Broken / Harmed", D: "Said" }, correct: "A" },
+            { q: '2. What is the synonym of "Obliged to"?', options: { A: "Priest", B: "Famous", C: "Had to", D: "Mended / Fixed" }, correct: "C" },
+            { q: '3. What is the synonym of "Claimed"?', options: { A: "Rich", B: "Said", C: "Had to", D: "Floors" }, correct: "B" },
+            { q: '4. What is the synonym of "Extraordinarily Similar"?', options: { A: "Like", B: "Found", C: "Quiet", D: "Pieces" }, correct: "A" },
+            { q: '5. What is the synonym of "Immediately"?', options: { A: "At once", B: "Position", C: "Reporter", D: "Sure" }, correct: "A" },
+            { q: '6. What is the synonym of "Convinced"?', options: { A: "Sure", B: "Get", C: "Told", D: "Covers" }, correct: "A" },
+            { q: '7. What is the synonym of "Vicar"?', options: { A: "Famous", B: "Priest", C: "Floors", D: "Quiet" }, correct: "B" },
+            { q: '8. What is the synonym of "Repaired"?', options: { A: "Mended / Fixed", B: "Sacked", C: "Under", D: "Ashamed" }, correct: "A" },
+            { q: '9. What is the synonym of "Damaged"?', options: { A: "Get", B: "Broken / Harmed", C: "Position", D: "Print" }, correct: "B" },
+            { q: '10. What is the synonym of "Silent"?', options: { A: "Quiet", B: "Give up", C: "Rich", D: "Ruins" }, correct: "A" },
+            { q: '11. What is the synonym of "With a start"?', options: { A: "Suddenly / In surprise", B: "Discovered", C: "Pieces", D: "Famous" }, correct: "A" },
+            { q: '12. What is the synonym of "Caught sight of"?', options: { A: "Special right", B: "Noticed / Saw", C: "Told", D: "Reporter" }, correct: "B" },
+            { q: '13. What is the synonym of "Explored"?', options: { A: "Hesitantly", B: "Print", C: "Discovered", D: "Floors" }, correct: "C" },
+            { q: '14. What is the synonym of "Ancient"?', options: { A: "Very old", B: "Sure", C: "Under", D: "Covers" }, correct: "A" },
+            { q: '15. What is the synonym of "Prosperous"?', options: { A: "Rich", B: "Quiet", C: "Sacked", D: "Pieces" }, correct: "A" },
+            { q: '16. What is the synonym of "Storeys"?', options: { A: "Floors", B: "Get", C: "Found", D: "Ashamed" }, correct: "A" },
+            { q: '17. What is the synonym of "Beneath"?', options: { A: "Under", B: "Position", C: "Mended / Fixed", D: "Famous" }, correct: "A" },
+            { q: '18. What is the synonym of "Fragments"?', options: { A: "Pieces", B: "Reporter", C: "Told", D: "Give up" }, correct: "A" },
+            { q: '19. What is the synonym of "Remains"?', options: { A: "Ruins", B: "Get", C: "Quiet", D: "Interested" }, correct: "A" },
+            { q: '20. What is the synonym of "Receive"?', options: { A: "Get", B: "Discovered", C: "Covers", D: "Sacked" }, correct: "A" },
+            { q: '21. What is the synonym of "Sacrifice"?', options: { A: "Found", B: "Give up", C: "Floors", D: "Said" }, correct: "B" },
+            { q: '22. What is the synonym of "Privilege"?', options: { A: "Special right", B: "Hesitantly", C: "Print", D: "Quiet" }, correct: "A" },
+            { q: '23. What is the synonym of "Curious"?', options: { A: "Interested", B: "Position", C: "Mended / Fixed", D: "Get" }, correct: "A" },
+            { q: '24. What is the synonym of "Embarrassed"?', options: { A: "Ashamed", B: "Covers", C: "Rich", D: "Discovered" }, correct: "A" },
+            { q: '25. What is the synonym of "Discovered"?', options: { A: "Found", B: "Sacked", C: "Suddenly / In surprise", D: "Told" }, correct: "A" },
+            { q: '26. What is the synonym of "Status"?', options: { A: "Position", B: "Very old", C: "Pieces", D: "Get" }, correct: "A" },
+            { q: '27. What is the synonym of "Journalist"?', options: { A: "Reporter", B: "Famous", C: "Print", D: "Under" }, correct: "A" },
+            { q: '28. What is the synonym of "Instructed"?', options: { A: "Told", B: "Floors", C: "Rich", D: "Noticed / Saw" }, correct: "A" },
+            { q: '29. What is the synonym of "Well-known"?', options: { A: "Famous", B: "Give up", C: "Quiet", D: "Position" }, correct: "A" },
+            { q: '30. What is the synonym of "Publish"?', options: { A: "Print", B: "Ruins", C: "Ashamed", D: "Had to" }, correct: "A" },
+            { q: '31. What is the synonym of "Surrounds"?', options: { A: "Covers", B: "Get", C: "Said", D: "Reporter" }, correct: "A" },
+            { q: '32. What is the synonym of "Fired"?', options: { A: "Sacked", B: "Mended / Fixed", C: "Like", D: "Interested" }, correct: "A" },
+            { q: '33. What is the synonym of "Reluctantly"?', options: { A: "Hesitantly", B: "Found", C: "Special right", D: "Floors" }, correct: "A" }
+        ],
+        smash_grab: [
+            { q: '1. What is the synonym of "expensive"?', options: { A: "costly", B: "nearly", C: "helpers", D: "remained" }, correct: "A" },
+            { q: '2. What is the synonym of "almost"?', options: { A: "broken", B: "many", C: "nearly", D: "looking" }, correct: "C" },
+            { q: '3. What is the synonym of "assistants"?', options: { A: "helpers", B: "costly", C: "remained", D: "many" }, correct: "A" },
+            { q: '4. What is the synonym of "gazing"?', options: { A: "looking", B: "broken", C: "costly", D: "many" }, correct: "A" },
+            { q: '5. What is the synonym of "several"?', options: { A: "remained", B: "many", C: "helpers", D: "looking" }, correct: "B" },
+            { q: '6. What is the synonym of "stayed"?', options: { A: "remained", B: "nearly", C: "broken", D: "costly" }, correct: "A" },
+            { q: '7. What is the synonym of "smashed"?', options: { A: "broken", B: "helpers", C: "nearly", D: "looking" }, correct: "A" }
+        ],
+        crazy: [
+            { q: '1. What is the synonym of "demonstrated"?', options: { A: "showed", B: "residents", C: "guarded", D: "offered" }, correct: "A" },
+            { q: '2. What is the synonym of "inhabitants"?', options: { A: "act", B: "residents", C: "showed", D: "man-made" }, correct: "B" },
+            { q: '3. What is the synonym of "pretend"?', options: { A: "act", B: "stayed", C: "offered", D: "showed" }, correct: "A" },
+            { q: '4. What is the synonym of "remained"?', options: { A: "guarded", B: "stayed", C: "man-made", D: "residents" }, correct: "B" },
+            { q: '5. What is the synonym of "patrolled"?', options: { A: "guarded", B: "act", C: "offered", D: "showed" }, correct: "A" },
+            { q: '6. What is the synonym of "volunteered"?', options: { A: "residents", B: "stayed", C: "offered", D: "man-made" }, correct: "C" },
+            { q: '7. What is the synonym of "artificial"?', options: { A: "man-made", B: "guarded", C: "act", D: "showed" }, correct: "A" }
+        ]
+    };
+
+    Object.keys(englishVocabMap).forEach(cat => {
+        let catIndex = 0;
+        quizData.en.questions.forEach(q => {
+            if (q.cat === cat) {
+                const item = englishVocabMap[cat][catIndex];
+                if (item) {
+                    q.q = item.q;
+                    q.options = item.options;
+                }
+                catIndex++;
+            }
+        });
+    });
+
+    // نسخة أصلية ثابتة من جميع الأسئلة الأساسية (تُستخدم للاسترجاع بعد أي حذف/إخفاء)
+    const ORIGINAL_BUILTIN_QUESTIONS = {
+        ar: JSON.parse(JSON.stringify(quizData.ar.questions)),
+        en: JSON.parse(JSON.stringify(quizData.en.questions))
+    };
+
+    let currentLang = 'ar';
+    let currentFilter = 'all';
+
+    // ===== نظام الصوت (نغمات مولّدة برمجياً بدون ملفات خارجية) =====
+    let audioCtx = null;
+    let soundOn = true;
+
+    function getAudioCtx() {
+        if (!audioCtx) {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                return null;
+            }
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        return audioCtx;
+    }
+
+    // محرك نغمة محسّن: غلاف صوتي ADSR + مرشح تردد لنعومة أكبر + هارمونية خفيفة اختيارية
+    function playTone(freq, startTime, duration, ctx, type, peakGain, options) {
+        options = options || {};
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+
+        osc.type = type || 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        if (options.detuneCents) osc.detune.setValueAtTime(options.detuneCents, startTime);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(options.filterFreq || freq * 6, startTime);
+        filter.Q.value = 0.7;
+
+        const attack = options.attack !== undefined ? options.attack : 0.012;
+        const release = Math.max(duration - attack, 0.04);
+        const peak = peakGain || 0.16;
+
+        gainNode.gain.setValueAtTime(0.0001, startTime);
+        gainNode.gain.exponentialRampToValueAtTime(peak, startTime + attack);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + attack + release);
+
+        osc.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        osc.start(startTime);
+        osc.stop(startTime + duration + 0.02);
+
+        // هارمونية خفيفة (أوكتاف أعلى بحجم صوت أقل) لإضافة عمق ودفء للنغمة
+        if (options.withHarmonic) {
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.type = type || 'sine';
+            osc2.frequency.setValueAtTime(freq * 2, startTime);
+            gain2.gain.setValueAtTime(0.0001, startTime);
+            gain2.gain.exponentialRampToValueAtTime(peak * 0.22, startTime + attack);
+            gain2.gain.exponentialRampToValueAtTime(0.0001, startTime + attack + release);
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.start(startTime);
+            osc2.stop(startTime + duration + 0.02);
+        }
+    }
+
+    // إضافة صدى خفيف جداً (إعادة تشغيل النغمة بحجم صوت أقل وتأخير بسيط) لإحساس أكثر احترافية
+    function playEchoTail(freq, startTime, duration, ctx, type, peakGain) {
+        playTone(freq, startTime + duration * 0.5, duration * 0.7, ctx, type, peakGain * 0.3);
+    }
+
+    function playCorrectSound() {
+        if (!soundOn) return;
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        // نغمة "تأكيد" مألوفة الطابع: ثلث صاعد لطيف بحرارة هارمونية (شبيهة بنغمات الإشعار الحديثة)
+        playTone(659.25, now, 0.16, ctx, 'sine', 0.2, { withHarmonic: true, attack: 0.008 });
+        playTone(987.77, now + 0.09, 0.24, ctx, 'sine', 0.18, { withHarmonic: true, attack: 0.008 });
+    }
+
+    function playWrongSound() {
+        if (!soundOn) return;
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        // نغمة خطأ ناعمة وقصيرة (ثلث هابط مكتوم) بدون حدة معدنية مزعجة
+        playTone(311.13, now, 0.16, ctx, 'triangle', 0.15, { filterFreq: 900 });
+        playTone(233.08, now + 0.09, 0.2, ctx, 'triangle', 0.13, { filterFreq: 700 });
+    }
+
+    function playSuccessFanfare() {
+        if (!soundOn) return;
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        // مقطع احتفالي كامل: أربيجيو صاعد (دو-مي-صول-دو) مع هارمونيات دافئة + جرس بريق ختامي
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((freq, i) => {
+            playTone(freq, now + i * 0.12, 0.32, ctx, 'triangle', 0.17, { withHarmonic: true, attack: 0.01 });
+        });
+        // وتر ختامي (chord) يُعطي إحساس "الاحتفال" الكامل
+        const chordStart = now + 0.5;
+        [1046.5, 1318.5, 1568.0].forEach(freq => {
+            playTone(freq, chordStart, 0.55, ctx, 'sine', 0.1, { withHarmonic: false, attack: 0.02 });
+        });
+        // بريق لامع خفيف في الأعلى
+        playTone(2093, chordStart + 0.05, 0.4, ctx, 'sine', 0.05, { attack: 0.03 });
+    }
+
+    function playFailSound() {
+        if (!soundOn) return;
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        // مقطع هابط هادئ ومتعاطف (وليس حادًا أو مخيفًا) يوحي بمحاولة أخرى لاحقًا
+        const notes = [392.0, 349.23, 311.13, 293.66];
+        notes.forEach((freq, i) => {
+            playTone(freq, now + i * 0.16, 0.34, ctx, 'sine', 0.13, { withHarmonic: true, filterFreq: 1200, attack: 0.02 });
+        });
+        // نغمة ختامية منخفضة هادئة لإغلاق المقطع بلطف
+        playTone(220, now + 0.7, 0.5, ctx, 'sine', 0.09, { filterFreq: 800, attack: 0.03 });
+    }
+
+    function toggleSound(btn) {
+        soundOn = !soundOn;
+        if (btn) {
+            btn.innerText = soundOn ? '🔊' : '🔇';
+            btn.classList.toggle('muted', !soundOn);
+        }
+        if (soundOn) getAudioCtx();
+    }
+    
+    // متغيرات اللعبة التفاعلية
+    let filteredQuestions = [];
+    let currentQuestionIndex = 0;
+    let userScore = 0;
+
+    // ===== نظام الوحدات والأسئلة المخصّصة (يُحفظ في localStorage) =====
+    const CUSTOM_STORAGE_KEY = 'quizCustomUnits_v1';
+    const MANAGE_PASSWORD = 'fadi';
+    let isManageUnlocked = false;
+
+    function loadCustomUnits() {
+        try {
+            const raw = localStorage.getItem(CUSTOM_STORAGE_KEY);
+            const parsed = raw ? JSON.parse(raw) : null;
+            return {
+                units: (parsed && parsed.units) || [],
+                questions: (parsed && parsed.questions) || [],
+                hiddenBuiltinUnits: (parsed && parsed.hiddenBuiltinUnits) || []
+            };
+        } catch (e) {
+            return { units: [], questions: [], hiddenBuiltinUnits: [] };
+        }
+    }
+
+    function saveCustomUnits(data) {
+        try {
+            localStorage.setItem(CUSTOM_STORAGE_KEY, JSON.stringify(data));
+        } catch (e) { /* تجاهل أخطاء التخزين */ }
+    }
+
+    let customData = loadCustomUnits();
+
+    // قائمة الوحدات الأساسية الثابتة (لإدارة الإخفاء/الاسترجاع)
+    const BUILTIN_UNITS = [
+        { id: 'invitations', nameAr: 'الدعوات', nameEn: 'Invitations', tabId: 'tab-inv' },
+        { id: 'unit2', nameAr: 'الوحدة 2', nameEn: 'Unit 2', tabId: 'tab-u2' },
+        { id: 'unit3', nameAr: 'الوحدة 3', nameEn: 'Unit 3', tabId: 'tab-u3' },
+        { id: 'unit4', nameAr: 'الوحدة 4', nameEn: 'Unit 4', tabId: 'tab-u4' },
+        { id: 'learning_tips', nameAr: 'نصائح التعلم', nameEn: 'Learning Tips', tabId: 'tab-lt' },
+        { id: 'did_you_know', nameAr: 'هل تعلم؟', nameEn: 'Did You Know', tabId: 'tab-dyk' },
+        { id: 'vocabulary', nameAr: 'مفردات عامة', nameEn: 'Vocabulary', tabId: 'tab-vocab' },
+        { id: 'smash_grab', nameAr: 'Smash and Grab', nameEn: 'Smash and Grab', tabId: 'tab-sg' },
+        { id: 'crazy', nameAr: 'Crazy', nameEn: 'Crazy', tabId: 'tab-crazy' }
+    ];
+
+    function isBuiltinHidden(unitId) {
+        return customData.hiddenBuiltinUnits.includes(unitId);
+    }
+
+    // إعادة بناء quizData بالكامل من المصدر الأصلي + تطبيق الإخفاء + دمج المخصص
+    function rebuildQuizData() {
+        ['ar', 'en'].forEach(lang => {
+            const baseQuestions = ORIGINAL_BUILTIN_QUESTIONS[lang].filter(q => !isBuiltinHidden(q.cat));
+            quizData[lang].questions = JSON.parse(JSON.stringify(baseQuestions));
+        });
+
+        customData.questions.forEach(q => {
+            ['ar', 'en'].forEach(lang => {
+                const textKey = lang === 'ar' ? 'qAr' : 'qEn';
+                quizData[lang].questions.push({
+                    cat: q.unitId,
+                    q: q[textKey] && q[textKey].trim() ? q[textKey] : q.qAr,
+                    options: q.options,
+                    correct: q.correct,
+                    isCustom: true
+                });
+            });
+        });
+
+        customData.units.forEach(u => {
+            quizData.ar.headers[u.id] = `قسم: ${u.nameAr}`;
+            quizData.en.headers[u.id] = `Section: ${u.nameEn || u.nameAr}`;
+        });
+    }
+
+    function applyBuiltinTabsVisibility() {
+        BUILTIN_UNITS.forEach(u => {
+            const tabBtn = document.getElementById(u.tabId);
+            if (tabBtn) {
+                tabBtn.style.display = isBuiltinHidden(u.id) ? 'none' : '';
+            }
+        });
+    }
+
+    // دمج الوحدات المخصصة كتبويبات إضافية + دمج أسئلتها داخل quizData لكل اللغتين
+    // (تم استبدالها بـ rebuildQuizData أعلاه — تبقى الدالة هنا فقط كاسم بديل للتوافق)
+    function mergeCustomDataIntoQuiz() {
+        rebuildQuizData();
+        applyBuiltinTabsVisibility();
+    }
+
+
+    function renderCustomTabs() {
+        const container = document.getElementById('unitTabsContainer');
+        container.querySelectorAll('.tab-btn.custom-tab').forEach(el => el.remove());
+
+        customData.units.forEach(u => {
+            const btn = document.createElement('button');
+            btn.className = 'tab-btn custom-tab';
+            btn.id = `tab-custom-${u.id}`;
+            btn.onclick = () => filterUnit(u.id);
+            btn.innerText = currentLang === 'ar' ? u.nameAr : (u.nameEn || u.nameAr);
+            container.appendChild(btn);
+        });
+
+        if (customData.units.some(u => u.id === currentFilter)) {
+            const activeBtn = document.getElementById(`tab-custom-${currentFilter}`);
+            if (activeBtn) {
+                container.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+                activeBtn.classList.add('active');
+            }
+        }
+    }
+
+    function refreshQuestionUnitSelect() {
+        const select = document.getElementById('questionUnitSelect');
+        if (!select) return;
+        select.innerHTML = '';
+        if (customData.units.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.innerText = 'لا توجد وحدات — أضف وحدة أولاً';
+            select.appendChild(opt);
+            return;
+        }
+        customData.units.forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u.id;
+            opt.innerText = `${u.nameAr} (${u.id})`;
+            select.appendChild(opt);
+        });
+    }
+
+    function renderBuiltinUnitsList() {
+        const list = document.getElementById('builtinUnitsList');
+        list.innerHTML = '';
+
+        BUILTIN_UNITS.forEach(u => {
+            const hidden = isBuiltinHidden(u.id);
+            const qCount = ORIGINAL_BUILTIN_QUESTIONS.ar.filter(q => q.cat === u.id).length;
+            const card = document.createElement('div');
+            card.className = 'custom-unit-card' + (hidden ? ' builtin-hidden' : '');
+            card.innerHTML = `
+                <div>
+                    <div class="unit-info">${u.nameAr} <span style="color:var(--muted); font-weight:500;">(${u.id})</span></div>
+                    <div class="unit-count">${qCount} سؤال${hidden ? ' — مخفية حالياً' : ''}</div>
+                </div>
+            `;
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'unit-toggle-btn';
+            toggleBtn.innerText = hidden ? '↺ استرجاع' : '🚫 إخفاء';
+            toggleBtn.onclick = () => toggleBuiltinUnit(u.id);
+            card.appendChild(toggleBtn);
+            list.appendChild(card);
+        });
+    }
+
+    function toggleBuiltinUnit(unitId) {
+        if (isBuiltinHidden(unitId)) {
+            customData.hiddenBuiltinUnits = customData.hiddenBuiltinUnits.filter(id => id !== unitId);
+        } else {
+            if (!confirm('سيتم إخفاء هذه الوحدة الأساسية من الاختبار. يمكنك استرجاعها في أي وقت من هذه القائمة. هل تريد الاستمرار؟')) return;
+            customData.hiddenBuiltinUnits.push(unitId);
+        }
+        saveCustomUnits(customData);
+        rebuildQuizData();
+        applyBuiltinTabsVisibility();
+        renderBuiltinUnitsList();
+        if (currentFilter === unitId && isBuiltinHidden(unitId)) {
+            filterUnit('all');
+        } else {
+            initQuiz();
+        }
+    }
+
+    function renderCustomUnitsList() {
+        const list = document.getElementById('customUnitsList');
+        const emptyMsg = document.getElementById('noCustomUnitsMsg');
+        list.innerHTML = '';
+
+        if (customData.units.length === 0) {
+            emptyMsg.style.display = 'block';
+            return;
+        }
+        emptyMsg.style.display = 'none';
+
+        customData.units.forEach(u => {
+            const unitQuestions = customData.questions.filter(q => q.unitId === u.id);
+            const card = document.createElement('div');
+            card.className = 'custom-unit-card';
+            card.innerHTML = `
+                <div>
+                    <div class="unit-info">${u.nameAr} <span style="color:var(--muted); font-weight:500;">(${u.id})</span></div>
+                    <div class="unit-count">${unitQuestions.length} سؤال</div>
+                </div>
+            `;
+            const delBtn = document.createElement('button');
+            delBtn.className = 'unit-delete-btn';
+            delBtn.innerText = 'حذف الوحدة';
+            delBtn.onclick = () => deleteCustomUnit(u.id);
+            card.appendChild(delBtn);
+            list.appendChild(card);
+
+            // عرض الأسئلة الفردية لهذه الوحدة مع زر حذف لكل سؤال
+            unitQuestions.forEach((q, idx) => {
+                const qRow = document.createElement('div');
+                qRow.className = 'custom-question-row';
+                const shortText = q.qAr.length > 60 ? q.qAr.slice(0, 60) + '…' : q.qAr;
+                qRow.innerHTML = `<span class="custom-question-text">• ${shortText}</span>`;
+                const qDelBtn = document.createElement('button');
+                qDelBtn.className = 'question-delete-btn';
+                qDelBtn.innerText = '✕';
+                qDelBtn.title = 'حذف هذا السؤال';
+                qDelBtn.onclick = () => deleteCustomQuestion(u.id, q);
+                qRow.appendChild(qDelBtn);
+                list.appendChild(qRow);
+            });
+        });
+    }
+
+    function addNewUnit() {
+        const idInput = document.getElementById('newUnitId');
+        const nameArInput = document.getElementById('newUnitNameAr');
+        const nameEnInput = document.getElementById('newUnitNameEn');
+        const feedback = document.getElementById('unitFeedback');
+
+        const id = idInput.value.trim().replace(/\s+/g, '_');
+        const nameAr = nameArInput.value.trim();
+        const nameEn = nameEnInput.value.trim();
+
+        if (!id || !nameAr) {
+            feedback.className = 'manage-feedback error';
+            feedback.innerText = 'الرجاء إدخال معرّف الوحدة واسمها بالعربية على الأقل.';
+            return;
+        }
+
+        const reservedIds = ['all', 'invitations', 'unit2', 'unit3', 'unit4', 'learning_tips', 'did_you_know', 'vocabulary', 'smash_grab', 'crazy'];
+        const exists = customData.units.some(u => u.id === id) || reservedIds.includes(id);
+        if (exists) {
+            feedback.className = 'manage-feedback error';
+            feedback.innerText = 'هذا المعرّف مستخدم بالفعل، اختر معرّفاً آخر.';
+            return;
+        }
+
+        customData.units.push({ id, nameAr, nameEn });
+        saveCustomUnits(customData);
+
+        idInput.value = '';
+        nameArInput.value = '';
+        nameEnInput.value = '';
+
+        feedback.className = 'manage-feedback success';
+        feedback.innerText = `تمت إضافة الوحدة "${nameAr}" بنجاح ✓`;
+
+        renderCustomTabs();
+        refreshQuestionUnitSelect();
+        renderCustomUnitsList();
+    }
+
+    function addNewQuestion() {
+        const unitSelect = document.getElementById('questionUnitSelect');
+        const qArText = document.getElementById('newQArText');
+        const qEnText = document.getElementById('newQEnText');
+        const a = document.getElementById('optA');
+        const b = document.getElementById('optB');
+        const c = document.getElementById('optC');
+        const d = document.getElementById('optD');
+        const correctSelect = document.getElementById('correctAnswerSelect');
+        const feedback = document.getElementById('questionFeedback');
+
+        const unitId = unitSelect.value;
+        if (!unitId) {
+            feedback.className = 'manage-feedback error';
+            feedback.innerText = 'الرجاء إضافة وحدة أولاً ثم اختيارها.';
+            return;
+        }
+        if (!qArText.value.trim() || !a.value.trim() || !b.value.trim() || !c.value.trim() || !d.value.trim()) {
+            feedback.className = 'manage-feedback error';
+            feedback.innerText = 'الرجاء تعبئة نص السؤال وكل الخيارات الأربعة.';
+            return;
+        }
+
+        customData.questions.push({
+            unitId: unitId,
+            qAr: qArText.value.trim(),
+            qEn: qEnText.value.trim(),
+            options: { A: a.value.trim(), B: b.value.trim(), C: c.value.trim(), D: d.value.trim() },
+            correct: correctSelect.value
+        });
+        saveCustomUnits(customData);
+
+        qArText.value = '';
+        qEnText.value = '';
+        a.value = ''; b.value = ''; c.value = ''; d.value = '';
+
+        feedback.className = 'manage-feedback success';
+        feedback.innerText = 'تمت إضافة السؤال بنجاح ✓';
+
+        rebuildQuizData();
+        renderCustomUnitsList();
+    }
+
+    function deleteCustomQuestion(unitId, questionObj) {
+        if (!confirm('حذف هذا السؤال نهائياً؟')) return;
+        customData.questions = customData.questions.filter(q => q !== questionObj);
+        saveCustomUnits(customData);
+        rebuildQuizData();
+        renderCustomUnitsList();
+        if (currentFilter === unitId || currentFilter === 'all') {
+            initQuiz();
+        }
+    }
+
+    function deleteCustomUnit(unitId) {
+        if (!confirm('سيتم حذف هذه الوحدة وجميع أسئلتها نهائياً. هل أنت متأكد؟')) return;
+        customData.units = customData.units.filter(u => u.id !== unitId);
+        customData.questions = customData.questions.filter(q => q.unitId !== unitId);
+        saveCustomUnits(customData);
+
+        delete quizData.ar.headers[unitId];
+        delete quizData.en.headers[unitId];
+
+        renderCustomTabs();
+        refreshQuestionUnitSelect();
+        renderCustomUnitsList();
+        rebuildQuizData();
+
+        if (currentFilter === unitId) {
+            filterUnit('all');
+        }
+    }
+
+    function deleteAllCustomData() {
+        if (!confirm('سيتم حذف جميع الوحدات والأسئلة المضافة بشكل نهائي ولا يمكن التراجع عن ذلك. هل تريد الاستمرار؟')) return;
+        customData.units.forEach(u => {
+            delete quizData.ar.headers[u.id];
+            delete quizData.en.headers[u.id];
+        });
+        customData.units = [];
+        customData.questions = [];
+        saveCustomUnits(customData);
+
+        renderCustomTabs();
+        refreshQuestionUnitSelect();
+        renderCustomUnitsList();
+        rebuildQuizData();
+
+        const stillExists = customData.units.some(u => u.id === currentFilter);
+        if (!stillExists && !['all','invitations','unit2','unit3','unit4','learning_tips','did_you_know'].includes(currentFilter)) {
+            filterUnit('all');
+        } else {
+            initQuiz();
+        }
+    }
+
+    function resetAllHiddenUnits() {
+        if (customData.hiddenBuiltinUnits.length === 0) {
+            alert('لا توجد وحدات أساسية مخفية حالياً.');
+            return;
+        }
+        customData.hiddenBuiltinUnits = [];
+        saveCustomUnits(customData);
+        rebuildQuizData();
+        applyBuiltinTabsVisibility();
+        renderBuiltinUnitsList();
+        initQuiz();
+    }
+
+    // ===== حماية لوحة الإدارة بكلمة مرور =====
+    function openManagePanel() {
+        if (isManageUnlocked) {
+            openManagePanelContent();
+        } else {
+            document.getElementById('managePasswordInput').value = '';
+            document.getElementById('passwordFeedback').innerText = '';
+            document.getElementById('passwordOverlay').classList.add('open');
+            setTimeout(() => document.getElementById('managePasswordInput').focus(), 50);
+        }
+    }
+
+    function checkManagePassword() {
+        const input = document.getElementById('managePasswordInput');
+        const feedback = document.getElementById('passwordFeedback');
+        if (input.value === MANAGE_PASSWORD) {
+            isManageUnlocked = true;
+            document.getElementById('passwordOverlay').classList.remove('open');
+            openManagePanelContent();
+        } else {
+            feedback.innerText = 'كلمة المرور غير صحيحة، حاول مرة أخرى.';
+            input.value = '';
+            input.focus();
+        }
+    }
+
+    function closePasswordOnOverlay(event) {
+        if (event.target.id === 'passwordOverlay') {
+            document.getElementById('passwordOverlay').classList.remove('open');
+        }
+    }
+
+    function openManagePanelContent() {
+        document.getElementById('manageOverlay').classList.add('open');
+        refreshQuestionUnitSelect();
+        renderCustomUnitsList();
+        renderBuiltinUnitsList();
+    }
+
+    function closeManagePanel() {
+        document.getElementById('manageOverlay').classList.remove('open');
+    }
+
+    function closeManagePanelOnOverlay(event) {
+        if (event.target.id === 'manageOverlay') closeManagePanel();
+    }
+
+    function switchManageTab(tab) {
+        const tabs = { unit: 'manageContentUnit', question: 'manageContentQuestion', list: 'manageContentList' };
+        Object.values(tabs).forEach(id => document.getElementById(id).style.display = 'none');
+        document.getElementById(tabs[tab]).style.display = 'block';
+
+        ['manageTabUnit', 'manageTabQuestion', 'manageTabList'].forEach(id => document.getElementById(id).classList.remove('active'));
+        const activeMap = { unit: 'manageTabUnit', question: 'manageTabQuestion', list: 'manageTabList' };
+        document.getElementById(activeMap[tab]).classList.add('active');
+
+        if (tab === 'question') refreshQuestionUnitSelect();
+        if (tab === 'list') { renderCustomUnitsList(); renderBuiltinUnitsList(); }
+    }
+
+
+    function updateTabsText() {
+        const txt = quizData[currentLang].tabsText;
+        document.getElementById('tab-all').innerText = currentLang === 'ar' ? `${txt.all} (All)` : `${txt.all}`;
+        document.getElementById('tab-inv').innerText = currentLang === 'ar' ? `${txt.inv} (Invitations)` : `${txt.inv}`;
+        document.getElementById('tab-u2').innerText = currentLang === 'ar' ? `${txt.u2} (Unit 2)` : `${txt.u2}`;
+        document.getElementById('tab-u3').innerText = currentLang === 'ar' ? `${txt.u3} (Unit 3)` : `${txt.u3}`;
+        document.getElementById('tab-u4').innerText = currentLang === 'ar' ? `${txt.u4} (Unit 4)` : `${txt.u4}`;
+        document.getElementById('tab-lt').innerText = currentLang === 'ar' ? `${txt.lt} (Learning Tips)` : `${txt.lt}`;
+        document.getElementById('tab-dyk').innerText = currentLang === 'ar' ? `${txt.dyk} (Did You Know)` : `${txt.dyk}`;
+        document.getElementById('tab-vocab').innerText = currentLang === 'ar' ? `${txt.vocab} (Vocabulary)` : `${txt.vocab}`;
+        document.getElementById('tab-sg').innerText = txt.sg;
+        document.getElementById('tab-crazy').innerText = txt.crazy;
+    }
+
+    function initQuiz() {
+        const data = quizData[currentLang];
+        
+        document.getElementById('quizTitle').innerText = data.title;
+        document.getElementById('unitHeader').innerText = data.headers[currentFilter];
+        document.getElementById('restartBtn').innerText = data.restartText;
+        
+        updateTabsText();
+
+        // تصفية الأسئلة بناء على التبويب المختار
+        filteredQuestions = data.questions.filter(item => currentFilter === 'all' || item.cat === currentFilter);
+        
+        currentQuestionIndex = 0;
+        userScore = 0;
+
+        document.getElementById('result-card').style.display = 'none';
+        document.getElementById('quiz-box').style.display = 'block';
+        document.getElementById('progressContainer').style.display = 'block';
+
+        if(filteredQuestions.length === 0) {
+            document.getElementById('questionText').innerText = "No Questions available.";
+            document.getElementById('optionsContainer').innerHTML = "";
+            return;
+        }
+
+        showQuestion();
+    }
+
+    function showQuestion() {
+        // تحديث شريط التقدم
+        const progressPercent = (currentQuestionIndex / filteredQuestions.length) * 100;
+        document.getElementById('progressBar').style.width = `${progressPercent}%`;
+
+        // تحديث عداد السؤال (مثال: 3 / 17)
+        const counterEl = document.getElementById('questionCounter');
+        if (counterEl) {
+            counterEl.innerText = `${currentQuestionIndex + 1} / ${filteredQuestions.length}`;
+        }
+
+        const currentQuestion = filteredQuestions[currentQuestionIndex];
+        document.getElementById('questionText').innerText = currentQuestion.q;
+        
+        const container = document.getElementById('optionsContainer');
+        container.innerHTML = '';
+
+        for (let key in currentQuestion.options) {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `<strong>${key}:</strong> &nbsp;${currentQuestion.options[key]}`;
+            btn.onclick = () => checkAnswer(key, btn);
+            container.appendChild(btn);
+        }
+    }
+
+    function checkAnswer(selectedKey, clickedButton) {
+        const currentQuestion = filteredQuestions[currentQuestionIndex];
+        const correctAnswer = currentQuestion.correct;
+        const allButtons = document.querySelectorAll('.option-btn');
+
+        // قفل جميع الأزرار لمنع الضغط المتكرر
+        allButtons.forEach(btn => btn.disabled = true);
+
+        if (selectedKey === correctAnswer) {
+            clickedButton.classList.add('correct');
+            userScore++;
+            playCorrectSound();
+        } else {
+            clickedButton.classList.add('wrong');
+            playWrongSound();
+            // إظهار الإجابة الصحيحة للمستخدم ليتعلم منها
+            allButtons.forEach(btn => {
+                if (btn.innerText.startsWith(correctAnswer + ':')) {
+                    btn.classList.add('correct');
+                }
+            });
+        }
+
+        // الانتقال التلقائي للسؤال التالي بعد ثانية ونصف
+        setTimeout(() => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < filteredQuestions.length) {
+                showQuestion();
+            } else {
+                showFinalResult();
+            }
+        }, 1500);
+    }
+
+    function showFinalResult() {
+        document.getElementById('progressBar').style.width = `100%`;
+        document.getElementById('quiz-box').style.display = 'none';
+        
+        const resultCard = document.getElementById('result-card');
+        const resultMsg = document.getElementById('resultMsg');
+        const scoreText = document.getElementById('scoreText');
+        const data = quizData[currentLang];
+        
+        resultCard.style.display = 'block';
+        const percentage = (userScore / filteredQuestions.length) * 100;
+        const emojiEl = document.getElementById('resultEmoji');
+
+        if (percentage >= 50) {
+            resultCard.className = 'success-result';
+            resultMsg.innerHTML = data.successMsg;
+            if (emojiEl) emojiEl.innerText = '🎉';
+            playSuccessFanfare();
+        } else {
+            resultCard.className = 'fail-result';
+            resultMsg.innerHTML = data.failMsg;
+            if (emojiEl) emojiEl.innerText = '📋';
+            playFailSound();
+        }
+        
+        scoreText.innerHTML = `${data.scoreWord}: <br><span style="font-size: 28px; color: var(--primary-color);">${userScore}</span> ${data.ofWord} ${filteredQuestions.length} (${percentage.toFixed(0)}%)`;
+    }
+
+    function restartQuiz() {
+        initQuiz();
+    }
+
+    function switchLanguage(lang) {
+        currentLang = lang;
+        const htmlTag = document.getElementById('htmlTag');
+        const btnAr = document.getElementById('btn-lang-ar');
+        const btnEn = document.getElementById('btn-lang-en');
+        const brandEl = document.getElementById('brandText');
+        
+        if (lang === 'ar') {
+            htmlTag.setAttribute('dir', 'rtl');
+            htmlTag.setAttribute('lang', 'ar');
+            btnAr.classList.add('active');
+            btnEn.classList.remove('active');
+            if (brandEl) brandEl.innerText = 'الاختبارات';
+            updateManageTexts('ar');
+        } else {
+            htmlTag.setAttribute('dir', 'ltr');
+            htmlTag.setAttribute('lang', 'en');
+            btnEn.classList.add('active');
+            btnAr.classList.remove('active');
+            if (brandEl) brandEl.innerText = 'Quiz';
+            updateManageTexts('en');
+        }
+        initQuiz();
+        renderCustomTabs();
+    }
+
+    function updateManageTexts(lang) {
+        const map = {
+            ar: {
+                manageBtnText: 'إدارة الوحدات والأسئلة',
+                managePanelTitle: 'إدارة الوحدات والأسئلة',
+                manageTabUnit: 'إضافة وحدة جديدة',
+                manageTabQuestion: 'إضافة سؤال',
+                manageTabList: 'الوحدات المضافة'
+            },
+            en: {
+                manageBtnText: 'Manage Units & Questions',
+                managePanelTitle: 'Manage Units & Questions',
+                manageTabUnit: 'Add New Unit',
+                manageTabQuestion: 'Add Question',
+                manageTabList: 'Custom Units'
+            }
+        };
+        const t = map[lang];
+        Object.keys(t).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = t[id];
+        });
+    }
+
+    function filterUnit(category) {
+        currentFilter = category;
+        const tabs = document.querySelectorAll('.tab-btn');
+        tabs.forEach(tab => tab.classList.remove('active'));
+
+        const tabMap = { all: 'all', invitations: 'inv', unit2: 'u2', unit3: 'u3', unit4: 'u4', learning_tips: 'lt', did_you_know: 'dyk', vocabulary: 'vocab', smash_grab: 'sg', crazy: 'crazy' };
+        if (tabMap[category]) {
+            document.getElementById(`tab-${tabMap[category]}`).classList.add('active');
+        } else {
+            const customBtn = document.getElementById(`tab-custom-${category}`);
+            if (customBtn) customBtn.classList.add('active');
+        }
+        initQuiz();
+    }
+
+    // تشغيل الاختبار فور تحميل الصفحة لأول مرة
+    window.onload = function() {
+        mergeCustomDataIntoQuiz();
+        renderCustomTabs();
+        initQuiz();
+    };
+</script>
+
+</body>
+</html>
