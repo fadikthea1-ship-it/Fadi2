@@ -1,2 +1,0 @@
-# Fadi2
-Quiz
